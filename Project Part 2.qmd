@@ -46,16 +46,24 @@ summary(modelpt)
 
 plot(modelpt)
 
+```
+
+```{r}
 modeldfg <- lm(hit_distance_sc ~ dist_from_cen_gmc, data = df_baseball_clean)
 summary(modeldfg)
 
 plot(modeldfg)
 
+```
+
+```{r}
 modellag <- lm(hit_distance_sc ~ launch_angle_gmc, data = df_baseball_clean)
 summary(modellag)
 
 plot(modellag)
+```
 
+```{r}
 modellsg <- lm(hit_distance_sc ~ launch_speed_gmc, data = df_baseball_clean)
 summary(modellsg)
 
