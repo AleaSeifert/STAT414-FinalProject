@@ -47,8 +47,23 @@ df_baseball_clean
 ```
 
 ```{r}
+modelgt <- lm(hit_distance_sc ~ game_type, data = df_baseball_clean)
+summary(modelgt)
+
+
+modelgt |> ggplot(aes(x=game_type, y=hit_distance_sc)) +
+  geom_boxplot()
+```
+
+
+
+
+```{r}
 modelpt <-  lm(hit_distance_sc ~ pitch_type, data = df_baseball_clean)
 summary(modelpt)
+
+modelpt |> ggplot(aes(x=pitch_type, y=hit_distance_sc)) +
+  geom_boxplot()
 
 plot(modelpt)
 
@@ -58,6 +73,9 @@ plot(modelpt)
 modeldfg <- lm(hit_distance_sc ~ dist_from_cen_gmc, data = df_baseball_clean)
 summary(modeldfg)
 
+modeldfg |> ggplot(aes(x=dist_from_cen_gmc, y=hit_distance_sc)) +
+  geom_point()
+
 plot(modeldfg)
 
 ```
@@ -66,12 +84,20 @@ plot(modeldfg)
 modellag <- lm(hit_distance_sc ~ launch_angle_gmc, data = df_baseball_clean)
 summary(modellag)
 
+modellag |> ggplot(aes(x=launch_angle_gmc, y=hit_distance_sc)) +
+  geom_point()
+
 plot(modellag)
 ```
 
 ```{r}
+
 modellsg <- lm(hit_distance_sc ~ launch_speed_gmc, data = df_baseball_clean)
 summary(modellsg)
+
+
+modellsg |> ggplot(aes(x=launch_speed_gmc, y=hit_distance_sc)) +
+  geom_point()
 
 plot(modellsg)
 ```
