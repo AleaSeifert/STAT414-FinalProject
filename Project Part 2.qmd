@@ -27,12 +27,14 @@ df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/st
 
 # only keep variables of interest, drop NA obs.
 df_baseball_clean <- df_baseball |>
-  mutate(dist_from_cen = sqrt(hc_x^2 + hc_y^2),
+  mutate(dist_from_cen = sqrt((plate_x^2) + (plate_z^2)),
          pitch_type = factor(pitch_type),
          game_type = factor(game_type),
          batter = factor(batter),
-         stand = factor(stand)) |>
-  select(hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter, stand) |>
+         stand = factor(stand),
+         type = factor(type)) |>
+  select(type, hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter, stand, plate_x, plate_z) |>
+  filter(type == "X") |>
   drop_na() |>
   mutate(dist_from_cen_gmc = dist_from_cen - mean(dist_from_cen),
          hit_distance_gmc = hit_distance_sc - mean(hit_distance_sc),
@@ -71,14 +73,34 @@ plot(modelpt)
 ```
 
 ```{r}
-modeldfg <- lm(hit_distance_sc ~ dist_from_cen_gmc, data = df_baseball_clean)
+modeldfg <- lm(hit_distance_sc ~ dist_from_cen, data = df_baseball_clean)
 summary(modeldfg)
 
-modeldfg |> ggplot(aes(x=dist_from_cen_gmc, y=hit_distance_sc)) +
+modeldfg |> ggplot(aes(x=dist_from_cen, y=hit_distance_sc)) +
   geom_point()
 
 plot(modeldfg)
 
+```
+
+```{r}
+modelxcoord <- lm(hit_distance_sc ~ plate_x, data = df_baseball_clean)
+summary(modelxcoord)
+
+modelxcoord |> ggplot(aes(x=plate_x, y=hit_distance_sc)) +
+  geom_point()
+
+plot(modelxcoord)
+```
+
+```{r}
+modelzcoord <- lm(hit_distance_sc ~ plate_z, data = df_baseball_clean)
+summary(modelzcoord)
+
+modelzcoord |> ggplot(aes(x=plate_z, y=hit_distance_sc)) +
+  geom_point()
+
+plot(modelzcoord)
 ```
 
 ```{r}
