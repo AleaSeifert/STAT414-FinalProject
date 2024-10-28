@@ -40,3 +40,13 @@ df_baseball_clean <- df_baseball |>
 df_baseball_clean
 ```
 
+```{r}
+modelpt <-  lm(hit_distance_sc ~ pitch_type, data = df_baseball_clean)
+summary(modelpt)
+
+plot(modelpt)
+
+```
+
+
+
