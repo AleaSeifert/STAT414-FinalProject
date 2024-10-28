@@ -16,3 +16,15 @@ library(performance)
 
 df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
 ```
+
+
+```{r}
+#| label: clean data
+
+# only keep variables of interest, drop NA obs.
+df_baseball_clean <- df_baseball |>
+  mutate(dist_from_cen = sqrt(hc_x^2 + hc_y^2)) |>
+  select(hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter) |>
+  drop_na()
+
+```
