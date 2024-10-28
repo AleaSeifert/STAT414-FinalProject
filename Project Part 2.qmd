@@ -30,8 +30,9 @@ df_baseball_clean <- df_baseball |>
   mutate(dist_from_cen = sqrt(hc_x^2 + hc_y^2),
          pitch_type = factor(pitch_type),
          game_type = factor(game_type),
-         batter = factor(batter)) |>
-  select(hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter) |>
+         batter = factor(batter),
+         stand = factor(stand)) |>
+  select(hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter, stand) |>
   drop_na() |>
   mutate(dist_from_cen_gmc = dist_from_cen - mean(dist_from_cen),
          hit_distance_gmc = hit_distance_sc - mean(hit_distance_sc),
@@ -102,6 +103,15 @@ modellsg |> ggplot(aes(x=launch_speed_gmc, y=hit_distance_sc)) +
 plot(modellsg)
 ```
 
+```{r}
+modelside <- lm(hit_distance_sc ~ stand, data=df_baseball_clean)
+summary(modelside)
+
+modelside |> ggplot(aes(x=stand, y=hit_distance_sc)) +
+  geom_boxplot()
+
+plot(modelside)
+```
 
 ```{r}
 ## Finding the number of Batters and Hits
