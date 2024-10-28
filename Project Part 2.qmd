@@ -13,6 +13,7 @@ library(tidyverse)
 library(lme4)
 library(nlme)
 library(performance)
+library(ggplot2)
 
 df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
 ```
@@ -25,6 +26,17 @@ df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/st
 df_baseball_clean <- df_baseball |>
   mutate(dist_from_cen = sqrt(hc_x^2 + hc_y^2)) |>
   select(hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter) |>
-  drop_na()
+  drop_na() |>
+  mutate(dist_from_cen_gmc = dist_from_cen - mean(dist_from_cen),
+         hit_distance_gmc = hit_distance_sc - mean(hit_distance_sc),
+         launch_angle_gmc = launch_angle - mean(launch_angle),
+         launch_speed_gmc = launch_speed - mean(launch_speed))
 
 ```
+
+```{r}
+#| label: EDA on variables of interest
+
+df_baseball_clean
+```
+
