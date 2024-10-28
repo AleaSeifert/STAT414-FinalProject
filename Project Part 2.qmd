@@ -103,4 +103,18 @@ plot(modellsg)
 ```
 
 
+```{r}
+## Finding the number of Batters and Hits
+n_distinct(df_baseball_clean$batter)
+
+## Total Number of hits per player
+df_baseball_clean |>
+  group_by(batter) |>
+  summarize(total_hits = sum(hit_distance_sc)) |>
+  summarize(average = mean(total_hits))
+
+## Total Number of Data Points
+df_baseball_clean |>
+  summarize(total_hits = sum(hit_distance_sc))
+```
 
