@@ -47,12 +47,12 @@ df_baseball_clean
 ```
 
 ```{r}
-modelgt <- lm(hit_distance_sc ~ game_type, data = df_baseball_clean)
+'''modelgt <- lm(hit_distance_sc ~ game_type, data = df_baseball_clean)
 summary(modelgt)
 
 
 modelgt |> ggplot(aes(x=game_type, y=hit_distance_sc)) +
-  geom_boxplot()
+  geom_boxplot()'''
 ```
 
 
