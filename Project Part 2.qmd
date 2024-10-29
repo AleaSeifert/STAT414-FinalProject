@@ -49,16 +49,15 @@ df_baseball_clean <- df_baseball |>
 df_baseball_clean
 ```
 
-```{r}
+
 '''modelgt <- lm(hit_distance_sc ~ game_type, data = df_baseball_clean)
 summary(modelgt)
 
 
 modelgt |> ggplot(aes(x=game_type, y=hit_distance_sc)) +
   geom_boxplot()'''
-```
 
-
+This is how we realized that game_type wouldn't do anything for us
 
 
 ```{r}
