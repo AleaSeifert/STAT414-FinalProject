@@ -12,17 +12,27 @@ set.seed(7000)
 library(readr)
 library(tidyverse)
 library(lme4)
-library(nlme)
 library(performance)
 library(ggplot2)
 
 df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
 ```
 
+```{r}
+baseball_sample <- df_baseball_clean[sample(nrow(df_baseball_clean), 1000), ]
+head(baseball_sample)
+```
+
+
 Include the following modeling steps. This may not find the best model, but will be an opportunity for you to build a multilevel model in a coherent fashion. You should be using your cleaned data set with
 quantitative variables grand-mean centered.
 
 1. Include a graph exploring the variability in the response variable across the Level-2 units. Fit an ANOVA using OLS for your response variable and the Level 2 grouping variable (the Level 2 units). Does the variation in the response across the Level 2 units appear to be statistically significant?
+
+```{r}
+
+```
+
 
 2. Fit the “random intercepts only” (null) model. Interpret each of the estimated parameters in context. Interpret the intraclass correlation coefficient in context. Does the value of the ICC seem “substantial” to you? Report the likelihood, deviance, and AIC values for later comparison.
 
