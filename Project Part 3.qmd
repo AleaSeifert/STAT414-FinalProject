@@ -19,7 +19,7 @@ df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/st
 ```
 
 ```{r}
-baseball_sample <- df_baseball_clean[sample(nrow(df_baseball_clean), 1000), ]
+baseball_sample <- df_baseball_clean[sample(nrow(df_baseball_clean), 1000), ] |> arrange(desc(batter))
 head(baseball_sample)
 ```
 
