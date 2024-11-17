@@ -1,0 +1,19 @@
+---
+title: "Project Part 2"
+format: pdf
+editor: source
+self-contained: true
+---
+
+```{r}
+#| label: load in data & libraries
+
+library(readr)
+library(tidyverse)
+library(lme4)
+library(nlme)
+library(performance)
+library(ggplot2)
+
+df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
+```
