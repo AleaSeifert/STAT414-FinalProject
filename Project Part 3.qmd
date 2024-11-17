@@ -30,7 +30,18 @@ quantitative variables grand-mean centered.
 1. Include a graph exploring the variability in the response variable across the Level-2 units. Fit an ANOVA using OLS for your response variable and the Level 2 grouping variable (the Level 2 units). Does the variation in the response across the Level 2 units appear to be statistically significant?
 
 ```{r}
+ggplot(rand_ints, aes(y = condval, x = grp)) +
+geom_point() +
+geom_errorbar(aes(ymin = condval - 1.96*condsd,
+max = condval + 1.96*condsd), width = 0) +
+labs(title = "Estimated effects",
+x = "School",
+y = "Estimate and 95% CI") +
+theme_bw()
 
+#Also try?
+#merTools::plotREsim( merTools::REsim( nullmodel ) )
+```
 ```
 
 
