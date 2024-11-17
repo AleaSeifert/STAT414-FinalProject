@@ -41,7 +41,29 @@ theme_bw()
 
 #Also try?
 #merTools::plotREsim( merTools::REsim( nullmodel ) )
+
+
+
 ```
+
+```{r}
+
+top_batters <- baseball_sample |>
+  group_by(batter) |>
+  summarize(total_hits = n()) |>
+  top_n(10, total_hits) |>
+  pull(batter)
+
+# Subset data for top 10 batters
+filtered_data <- baseball_sample |>
+  filter(batter %in% top_batters)
+
+ggplot(filtered_data, aes(x = batter, y = hit_distance_sc)) +
+  geom_boxplot(fill = "skyblue", color = "darkblue") +
+  labs(title = "Distance Hit by Batter",
+       x = "Batter",
+       y = "Distance (ft)") +
+  theme_minimal()
 ```
 
 
