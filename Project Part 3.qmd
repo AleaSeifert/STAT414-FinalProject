@@ -127,12 +127,11 @@ anova(nullmodel, model1)
 # dist by launch angle, launch speed, random batter intercepts
 model2 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | batter), data=final_data)
 summary(model2)
-anova(model2, model1)
 
 # dist by launch angle, random batter intercepts
 model3 <- lmer(hit_distance_sc ~ launch_angle_gmc + (1 | batter), data=final_data)
 summary(model3)
-anova(model3, model2)
+anova(model3, model2, model1)
 
 # dist by launch angle, random pitch type intercepts, launch speed, random batter intercepts
 model4 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | pitch_type) + (1 | batter), data=final_data)
