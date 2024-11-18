@@ -164,7 +164,7 @@ performance(model5)
 5. Consider random slopes for one Level 1 variable. (This could involve putting back in one of the variables that was removed earlier...) Include a graph illustrating variability in the estimated random slopes and discuss what you learn in context. Interpret the amount of group-to-group variation in these slopes in context. Once you have a model with at least one set of random slopes, compare this model to the model in step 4, is adding random slopes a significant improvement (REML, be clear how you are determining degrees of freedom)?
 
 ```{r}
-model6 <- lmer(hit_distance_sc ~ launch_speed_gmc + pitch_type + stand + (launch_angle_gmc | batter), data=final_data)
+model6 <- lmer(hit_distance_sc ~ is_fastball + launch_speed_gmc + stand + (launch_angle_gmc | batter), data=final_data)
 summary(model6)
 unique(final_data$pitch_type)
 ranef(model6)
