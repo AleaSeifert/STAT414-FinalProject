@@ -61,6 +61,9 @@ final_data <- hits_over_100 |>
 
 final_data |> distinct(batter) |> nrow()  # Should return 100
 final_data |> group_by(batter) |> summarise(total_hits = n()) 
+
+final_data <- final_data |>
+  mutate(is_fastball = as.integer(pitch_type %in% c("SI", "FF", "CU", "FA")))
 ```
 
 ```{r}
