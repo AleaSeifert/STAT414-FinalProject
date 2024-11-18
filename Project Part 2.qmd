@@ -47,6 +47,7 @@ df_baseball_clean <- df_baseball |>
 #| label: EDA on variables of interest
 
 df_baseball_clean
+save(df_baseball_clean, file = "df_baseball_clean.RData")
 ```
 
 
