@@ -16,7 +16,9 @@ library(performance)
 library(ggplot2)
 library(ICC)
 
-df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
+#df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
+
+load("df_baseball_clean.RData")
 ```
 
 ```{r}
@@ -34,61 +36,80 @@ quantitative variables grand-mean centered.
 ```{r}
 balanced_sample <- df_baseball_clean |>
   group_by(batter) |>
-  filter(n() >= 100) |>
-  slice_sample(n=100) |>
-  ungroup()
+  mutate(total_hits = n()) |>
+  filter(total_hits >= 100)
 ```
 
+```{r}
+hits_over_100 <- df_baseball_clean |>
+  group_by(batter) |>
+  mutate(total_hits = n()) |>
+  filter(total_hits >= 100) |> 
+  ungroup()  
+
+random_batters <- hits_over_100 |>
+  distinct(batter) |>              
+  slice_sample(n = 100) |>         
+  pull(batter)                     
+
+final_data <- hits_over_100 |>
+  filter(batter %in% random_batters) |>
+  group_by(batter) |>
+  slice_head(n = 100) |>  
+  ungroup()  
+
+
+final_data |> distinct(batter) |> nrow()  # Should return 100
+final_data |> group_by(batter) |> summarise(total_hits = n()) 
+```
 
 ```{r}
 #| label: graph of variability between top 10 batters (number of hits)
 
-# pull out top 10 hitters by total number of hits
-top_batters <- baseball_sample |>
-  group_by(batter) |>
-  summarize(total_hits = n()) |>
-  top_n(10, total_hits) |>
-  pull(batter)
-filtered_data <- balanced_sam |>
-  filter(batter %in% top_batters)
+top_batters <- final_data |>
+  distinct(batter) |>  
+  slice_sample(n = 10)  
 
-# plot variability in hit distance
+filtered_data <- final_data |>
+  filter(batter %in% top_batters$batter)  
+
 ggplot(filtered_data, aes(x = batter, y = hit_distance_sc)) +
   geom_boxplot(fill = "skyblue", color = "black") +
   labs(title = "Distance Hit by Batter",
        x = "Batter",
        y = "Distance (ft)") +
-  theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 
 ```{r}
-model0 <- lm(hit_distance_sc ~ batter, data=balanced_sample)
+model0 <- lm(hit_distance_sc ~ batter, data= final_data)
 anova(model0)
 ```
 
 
-Based on the results of an ANOVA fitting hit distance by batter, we have strong evidence that batter explains a significant amount of variation in hit distance (F = 2.81, p < .0001).
+Based on the results of an ANOVA fitting hit distance by batter, we have strong evidence that batter explains a significant amount of variation in hit distance (F = 2.5527, p < .0001). We will proceed with caution because we have a small F-value but a significant p-value. 
 
 2. Fit the “random intercepts only” (null) model. Interpret each of the estimated parameters in context. Interpret the intraclass correlation coefficient in context. Does the value of the ICC seem “substantial” to you? Report the likelihood, deviance, and AIC values for later comparison.
 
 ```{r}
-nullmodel <- lmer(hit_distance_sc ~ 1 + (1 | batter), data=balanced_sample)
+nullmodel <- lmer(hit_distance_sc ~ 1 + (1 | batter), data=final_data)
 summary(nullmodel)
 
-ICC::ICCbare(y=balanced_sample$hit_distance_sc, x = balanced_sample$batter)
+ICC::ICCbare(y=final_data$hit_distance_sc, x = final_data$batter)
 
 logLik(nullmodel)
 performance(nullmodel)
 ```
 
-$$ \tau_0^2: $$ The batter to batter variance in average hit distance is 326.3.
+$$ \tau_0^2: $$ The batter to batter variance in average hit distance is 278.2.
 
-$$ \sigma^2: $$ The variance in average hit distance for each batter is 18029.
+$$ \sigma^2: $$ The variance in average hit distance for each batter is 17917.6.
 
-$$ \beta_0: $$ The average hit distance across all batters is 164.739.
+$$ \beta_0: $$ The average hit distance across all batters is 163.336.
 
-$$ ICC: \frac{326.3}{326.3 + 18029} = 0.018 \implies$$ The correlation between two hits by the same batter is .018. This is not substantial. The log likelihood of the null model is -181496.3. The deviance is 134.272 feet. The AIC is 363000. 
+$$ ICC: \frac{278.2}{278.2 + 17917.6} = 0.01529 \implies$$ The correlation between two hits by the same batter is .015. 1.5% of the variation is explained by within batter variation in hit distance rather than between batters. This is not substantial. The log likelihood of the null model is -63201.76. The deviance is 133.857 feet. The AIC is 126400. 
 
 
 3. Add 1-3 Level 1 variables. Carry out a likelihood ratio test to compare this model to the model in step 2 (using ML, clearly explain how you find the chi-square value and df). Include details. Also report/compare the AIC values to the intercepts only model. Calculate a “proportion of variation
@@ -98,27 +119,43 @@ explained” for this set of variables and interpret the results in context (be 
 #| label: adding level 1 variables
 
 # dist by launch angle, pitch type, launch speed, random batter intercepts
-model1 <- lmer(hit_distance_sc ~ launch_angle_gmc + pitch_type + launch_speed_gmc + (1 | batter), data=balanced_sample)
+model1 <- lmer(hit_distance_sc ~ launch_angle_gmc + pitch_type + launch_speed_gmc + (1 | batter), data=final_data)
 summary(model1)
 anova(nullmodel, model1)
 
 
 # dist by launch angle, launch speed, random batter intercepts
-model2 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | batter), data=balanced_sample)
+model2 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | batter), data=final_data)
 summary(model2)
 anova(model2, model1)
 
-# dist by launch angle, random pitch type intercepts, launch speed, random batter intercepts
-model3 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | pitch_type) + (1 | batter), data=balanced_sample)
-
+# dist by launch angle, random batter intercepts
+model3 <- lmer(hit_distance_sc ~ launch_angle_gmc + (1 | batter), data=final_data)
 summary(model3)
-anova(model3, model1)
+anova(model3, model2)
+
+# dist by launch angle, random pitch type intercepts, launch speed, random batter intercepts
+model4 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | pitch_type) + (1 | batter), data=final_data)
+summary(model4)
+anova(model4, model1)
 ```
 
 
 
 4. Add 1-3 Level 2 variables. Carry out a likelihood ratio test to compare the models (using ML). Include details. Also report/compare the AIC values. Calculate a “proportion of variation explained” for each level and interpret the results in context. Remove (one at a time) any insignificant
 variables.
+
+```{r}
+# dist by launch angle, pitch type, launch speed, stand, random batter intercepts
+model5 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + pitch_type + stand + (1 | batter), data = final_data)
+
+summary(model5)
+anova(model1, model5)
+
+performance(model5)
+```
+
+**Model 5 includes three level 1 variables and where the batter stands as level 2 variable. Model 5 has an AIC of 119900 which is **
 
 5. Consider random slopes for one Level 1 variable. (This could involve putting back in one of the variables that was removed earlier...) Include a graph illustrating variability in the estimated random slopes and discuss what you learn in context. Interpret the amount of group-to-group variation in these slopes in context. Once you have a model with at least one set of random slopes, compare this model to the model in step 4, is adding random slopes a significant improvement (REML, be clear how you are determining degrees of freedom)?
 
