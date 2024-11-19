@@ -61,6 +61,9 @@ final_data <- hits_over_100 |>
 
 final_data |> distinct(batter) |> nrow()  # Should return 100
 final_data |> group_by(batter) |> summarise(total_hits = n()) 
+
+final_data <- final_data |>
+  mutate(is_fastball = as.integer(pitch_type %in% c("SI", "FF", "CU", "FA")))
 ```
 
 ```{r}
@@ -122,6 +125,7 @@ explained” for this set of variables and interpret the results in context (be 
 model1 <- lmer(hit_distance_sc ~ launch_angle_gmc + pitch_type + launch_speed_gmc + (1 | batter), data=final_data)
 summary(model1)
 anova(nullmodel, model1)
+performance(model1)
 
 
 # dist by launch angle, launch speed, random batter intercepts
@@ -157,5 +161,20 @@ performance(model5)
 **Model 5 includes three level 1 variables and where the batter stands as level 2 variable. Model 5 has an AIC of 119900 which is **
 
 5. Consider random slopes for one Level 1 variable. (This could involve putting back in one of the variables that was removed earlier...) Include a graph illustrating variability in the estimated random slopes and discuss what you learn in context. Interpret the amount of group-to-group variation in these slopes in context. Once you have a model with at least one set of random slopes, compare this model to the model in step 4, is adding random slopes a significant improvement (REML, be clear how you are determining degrees of freedom)?
+
+```{r}
+model6 <- lmer(hit_distance_sc ~ is_fastball + launch_speed_gmc + stand + (launch_angle_gmc | batter), data=final_data)
+summary(model6)
+unique(final_data$pitch_type)
+ranef(model6)
+
+preds = predict(model6, newdata = final_data)
+ggplot(final_data, aes(x = , y = preds , group = Beach, color = BeachAsFactor )) +
+geom_smooth(method = "lm", alpha = .5, se = FALSE) +
+geom_abline(intercept = 6.58, slope = -2.83) +
+geom_point(data = rikzdata, aes(y = Richness, color=BeachAsFactor), alpha = .5) +
+  theme_bw()
+```
+
 
 6. Add and interpret a cross-level interaction (you may have to use insignificant variables, focus on interpreting the interaction). Are you able to explain much of the slope variation you found in step 5? Is this a significantly better model? Keep in mind: Doing what I tell you to do is ~ B work. Doing more or less will move your grade up or down. Possible Extras: Enhanced graphs; More than 2 levels; Compare model in step 3 to a random effects ANCOVA model (using OLS); Testing additional random slopes; Cross validation (or at least consider possible multiple comparison issues); Including and interpreting confidence intervals
