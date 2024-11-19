@@ -157,7 +157,7 @@ $$\frac{18195.8 - 9466.2}{18195.8} = 0.4798$$
 
 ```{r}
 # dist by launch angle, pitch type, launch speed, stand, random batter intercepts
-model5 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + is_fastball + stand + (1 | batter), data = final_data, REML = FALSE)
+model5 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + is_fastball + stand + (1 | batter), data = final_data)
 
 summary(model5)
 anova(model1, model5)
