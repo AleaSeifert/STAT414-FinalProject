@@ -94,7 +94,7 @@ anova(model0)
 ```
 
 
-Based on the results of an ANOVA fitting hit distance by batter, we have strong evidence that batter explains a significant amount of variation in hit distance (F = 2.5527, p < .0001). We will proceed with caution because we have a small F-value but a significant p-value. 
+Based on the results of an ANOVA fitting hit distance by batter, we have strong evidence that batter explains a significant amount of variation in hit distance (F = 2.6984, p < .0001). We will proceed with caution because we have a small F-value but a significant p-value. 
 
 2. Fit the “random intercepts only” (null) model. Interpret each of the estimated parameters in context. Interpret the intraclass correlation coefficient in context. Does the value of the ICC seem “substantial” to you? Report the likelihood, deviance, and AIC values for later comparison.
 
@@ -108,17 +108,16 @@ logLik(nullmodel)
 performance(nullmodel)
 ```
 
-$$ \tau_0^2: $$ The batter to batter variance in average hit distance is 278.2.
+$$ \tau_0^2: $$ The batter to batter variance in average hit distance is 303.2.
 
-$$ \sigma^2: $$ The variance in average hit distance for each batter is 17917.6.
+$$ \sigma^2: $$ The variance in average hit distance for each batter is 17849.9.
 
-$$ \beta_0: $$ The average hit distance across all batters is 163.336.
+$$ \beta_0: $$ The average hit distance across all batters is 167.743.
 
-$$ ICC: \frac{278.2}{278.2 + 17917.6} = 0.01529 \implies$$ The correlation between two hits by the same batter is .015. 1.5% of the variation is explained by within batter variation in hit distance rather than between batters. This is not substantial. The log likelihood of the null model is -63201.76. The deviance is 133.857 feet. The AIC is 126400. 
+$$ ICC: \frac{303.2}{303.2 + 17849.9} = 0.01670238 \implies$$ The correlation between two hits by the same batter is .015. 1.5% of the variation is explained by within batter variation in hit distance rather than between batters. This is not substantial. The log likelihood of the null model is -63185.58. The deviance is 133.604 feet. The AIC is 126400. 
 
 
-3. Add 1-3 Level 1 variables. Carry out a likelihood ratio test to compare this model to the model in step 2 (using ML, clearly explain how you find the chi-square value and df). Include details. Also report/compare the AIC values to the intercepts only model. Calculate a “proportion of variation
-explained” for this set of variables and interpret the results in context (be clear variation in what). Did the Level 2 variance decrease? What does the tell you? Remove (one at a time) any insignificant variables.
+3. Add 1-3 Level 1 variables. Carry out a likelihood ratio test to compare this model to the model in step 2 (using ML, clearly explain how you find the chi-square value and df). Include details. Also report/compare the AIC values to the intercepts only model. Calculate a “proportion of variation explained” for this set of variables and interpret the results in context (be clear variation in what). Did the Level 2 variance decrease? What does the tell you? Remove (one at a time) any insignificant variables.
 
 
 ```{r}
