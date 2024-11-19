@@ -122,7 +122,7 @@ $$ ICC: \frac{303.2}{303.2 + 17849.9} = 0.01670238 \implies$$ The correlation be
 
 ```{r}
 #| label: adding level 1 variables
-set.s
+set.seed(7000)
 
 # dist by launch angle, pitch type, launch speed, random batter intercepts
 model1 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + is_fastball + (1 | batter), data=final_data)
