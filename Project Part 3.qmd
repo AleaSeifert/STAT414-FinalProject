@@ -15,6 +15,7 @@ library(lme4)
 library(performance)
 library(ggplot2)
 library(ICC)
+library(GGally)
 
 #df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
 
@@ -205,6 +206,14 @@ anova(model6,model7)
 
 ```
 We fit a model with an interaction between stand and fastball. This is a significantly better model because when doing an ANOVA comparing model 6 and our new model, we got a p-value of 0.022. This means we have evidence that the model with an interaction term is significantly better, and therefore explains more variation in the centered hit distance, than model 6. This new model explains a little bit more of the slope variation in the random centered launch angle slope. It used to have a variation of 0.161 and now, with the interaction, it has a variation of 0.1681. 
+
+```{r}
+num_vars <- final_data |>
+  select(hit_distance_sc, dist_from_cen_gmc, launch_angle_gmc, launch_speed_gmc)
+ggpairs(num_vars) 
+
+```
+
 
 
 Keep in mind: Doing what I tell you to do is ~ B work. Doing more or less will move your grade up or down. Possible Extras: Enhanced graphs; More than 2 levels; Compare model in step 3 to a random effects ANCOVA model (using OLS); Testing additional random slopes; Cross validation (or at least consider possible multiple comparison issues); Including and interpreting confidence intervals
