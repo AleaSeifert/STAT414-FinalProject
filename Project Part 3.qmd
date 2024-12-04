@@ -213,9 +213,9 @@ We fit a model with an interaction between stand and fastball. This is a signifi
 num_vars <- final_data |>
   mutate(log_la = log(launch_angle_gmc),
          sqrt_ls = sqrt(launch_angle_gmc)) |>
-  select(hit_distance_sc, dist_from_cen_gmc, log_la, sqrt_ls)
+  select(hit_distance_sc, launch_angle_gmc, launch_speed_gmc)
 
-ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Dist. - Center of Bat Box", "Launch Angle", "Launch Speed"))
+ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Launch Angle", "Launch Speed"))
 
 final_data |>
   ggplot(aes(x = stand, y=hit_distance_sc)) +
