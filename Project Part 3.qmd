@@ -16,6 +16,7 @@ library(performance)
 library(ggplot2)
 library(ICC)
 library(GGally)
+library(effects)
 
 #df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
 
@@ -210,12 +211,49 @@ We fit a model with an interaction between stand and fastball. This is a signifi
 
 ```{r}
 num_vars <- final_data |>
-  select(hit_distance_sc, dist_from_cen_gmc, launch_angle_gmc, launch_speed_gmc)
+  mutate(log_la = log(launch_angle_gmc),
+         sqrt_ls = sqrt(launch_angle_gmc)) |>
+  select(hit_distance_sc, dist_from_cen_gmc, log_la, sqrt_ls)
 
 ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Dist. - Center of Bat Box", "Launch Angle", "Launch Speed"))
 
+final_data |>
+  ggplot(aes(x = stand, y=hit_distance_sc)) +
+  geom_boxplot() +
+  facet_grid(~is_fastball) +
+  theme_bw() + 
+  labs(title ="Interaction Between Dominant Hand and Fastball", x = "Dominant Hand", y = "Hit Distance")
+
 ```
 
+```{r}
+full_model <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + is_fastball + stand + (1 | batter), data=final_data, REML = TRUE)
 
+model8 <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + stand + is_fastball  + (1 + launch_speed_gmc + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+summary(model8)
+anova(full_model, model8)
+
+model10 <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + stand + is_fastball  + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+anova(full_model, model10)
+
+performance(model10)
+performance(model8)
+
+plot(allEffects(model8), main = "Stand Effects")
+
+plot(effect(term="stand", mod=model8), xlab="Dominant Side", ylab="Hit Distance (ft)", main = "Dominant Side Effect")
+plot(effect(term="is_fastball", mod=model8), xlab="Is a Fastball", ylab="Hit Distance (ft)", main = "Fastball Effect")
+plot(effect(term="launch_angle_gmc*launch_speed_gmc", mod=model8), xlab="Launch Angle", ylab="Hit Distance (ft)", main="Launch Angle and Launch Speed Interaction Effect")
+
+final_data |>
+  ggplot(aes(x = stand, y = hit_distance_sc)) +
+  geom_boxplot() +
+  theme_bw() +
+  facet_grid(~is_fastball) +
+  labs(title = "Interaction between Dominant Side and Whether Pitch is a Fastball",
+       x = "Dominant Side",
+       y = "Hit Distance (ft)")
+
+```
 
 Keep in mind: Doing what I tell you to do is ~ B work. Doing more or less will move your grade up or down. Possible Extras: Enhanced graphs; More than 2 levels; Compare model in step 3 to a random effects ANCOVA model (using OLS); Testing additional random slopes; Cross validation (or at least consider possible multiple comparison issues); Including and interpreting confidence intervals
