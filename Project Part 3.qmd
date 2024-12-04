@@ -84,7 +84,7 @@ ggplot(filtered_data, aes(x = batter, y = hit_distance_sc)) +
   labs(title = "Distance Hit by Batter",
        x = "Batter",
        y = "Distance (ft)") +
-  theme_minimal() + 
+  theme_classic() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
@@ -184,7 +184,7 @@ geom_abline(intercept = 165.80, slope = 2.86 + 2.53) +
 geom_abline(intercept = 165.80 - 2.74, slope = 2.86 + 2.53) +
 geom_abline(intercept = 165.80 + .23, slope = 2.86 + 2.53) +
 geom_abline(intercept = 165.80 + .23 - 2.74, slope = 2.86 + 2.53) +
-  theme_bw()
+  theme_classic()
 ```
 
 The least amount of batter-to-batter variation in estimated launch angle slopes occurs at about -20 degrees.
@@ -210,7 +210,8 @@ We fit a model with an interaction between stand and fastball. This is a signifi
 ```{r}
 num_vars <- final_data |>
   select(hit_distance_sc, dist_from_cen_gmc, launch_angle_gmc, launch_speed_gmc)
-ggpairs(num_vars) 
+
+ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Dist. - Center of Bat Box", "Launch Angle", "Launch Speed"))
 
 ```
 
