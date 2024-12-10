@@ -236,8 +236,12 @@ anova(full_model, model8)
 model10 <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + stand + is_fastball  + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
 anova(full_model, model10)
 
+model11 <- lmer(hit_distance_sc ~ I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+anova(nullmodel, model11)
+
 performance(model10)
 performance(model8)
+
 
 plot(allEffects(model8), main = "Stand Effects")
 
