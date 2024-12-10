@@ -57,15 +57,15 @@ A few paragraphs that contain background information, motivation for your\
 research, and a statement of your research goals. Be sure to incorporate any supporting\
 references into the text. The purpose of the background is to place your work in the greater context of the literature in the area you are investigating. Then you should explicitly identify a hypothesis that you will investigate with your analysis. Don’t assume the reader remembers any of your earlier project reports.
 
-**We chose this project because baseball is not only fun to watch, but has various opportunities to explore multilevel data. We decided to analyze how the distance of a hit can be impacted by other factors in a game. We think that the relative hit location of the ball in the batting box and how the ball is thrown (angle and speed) will impact the hit distance. Since there is so much variability between different players' hits, we will include batter in the model. We have also included pitch type as we might need to control for this variable when analyzing hit distance.**
-
-**The data comes from Baseball Savant which records various aspects of plate appearances in MLB games. The data recorded comes from 4/2/2024 to 6/30/2024. This documentation was available at** [Baseball Savant](https://baseballsavant.mlb.com/csv-docs) **and can be downloaded at** [Share Point](https://yaleedu-my.sharepoint.com/personal/brian_macdonald_yale_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fbrian%5Fmacdonald%5Fyale%5Fedu%2FDocuments%2Fservice%2FCSAS%2F2025%2D04%2D11%20%2D%20CSAS%20at%20Yale%2Fdata%2Echallenge%2Fdata&ga=1). **The data was collected from a Statcase system which includes various cameras that are dedicated to tracking pitches, hits, and players. In the dataset, there are over 90 variables about all aspects of an mlb game, but we will only be looking at a few variables of interest.**
+**We chose this project because baseball is not only fun to watch, but has various opportunities to explore multilevel data. We decided to analyze how the distance of a hit can be impacted by other factors in a game. We think that the relative hit location of the ball in the batting box and how the ball is thrown (angle and speed) will impact the hit distance. Since there is so much variability between different players' hits, we will include batter in the model. We have also included pitch type as we might need to control for this variable when analyzing hit distance**
 
 ## Data and Methods
 
 ### Data Description
 
 -   Briefly describe your data, where your data came from (source), definitions of important variables, and how the data were collected. You should include a variables table and/or diagram representing your study.
+
+    **The data comes from Baseball Savant which records various aspects of plate appearances in MLB games. The data recorded comes from 4/2/2024 to 6/30/2024. This documentation was available at** [Baseball Savant](https://baseballsavant.mlb.com/csv-docs) **and can be downloaded at** [Share Point](https://yaleedu-my.sharepoint.com/personal/brian_macdonald_yale_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fbrian%5Fmacdonald%5Fyale%5Fedu%2FDocuments%2Fservice%2FCSAS%2F2025%2D04%2D11%20%2D%20CSAS%20at%20Yale%2Fdata%2Echallenge%2Fdata&ga=1). **The data was collected from a Statcase system which includes various cameras that are dedicated to tracking pitches, hits, and players. In the dataset, there are over 90 variables about all aspects of an mlb game, but we will only be looking at a few variables of interest.**
 
 -   Indicate any modifications made to the data, recoding, or decisions about missing data
 
