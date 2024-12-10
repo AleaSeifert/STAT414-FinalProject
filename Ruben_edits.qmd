@@ -1,0 +1,238 @@
+---
+title: "Project Part 3"
+format: pdf
+editor: source
+self-contained: true
+---
+
+```{r}
+#| label: load in data & libraries
+set.seed(7000)
+
+library(readr)
+library(tidyverse)
+library(lme4)
+library(performance)
+library(ggplot2)
+library(ICC)
+library(GGally)
+library(effects)
+
+#df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
+
+load("df_baseball_clean.RData")
+```
+
+```{r}
+set.seed(7000)
+baseball_sample <- df_baseball_clean
+head(baseball_sample)
+```
+
+
+Include the following modeling steps. This may not find the best model, but will be an opportunity for you to build a multilevel model in a coherent fashion. You should be using your cleaned data set with
+quantitative variables grand-mean centered.
+
+1. Include a graph exploring the variability in the response variable across the Level-2 units. Fit an ANOVA using OLS for your response variable and the Level 2 grouping variable (the Level 2 units). Does the variation in the response across the Level 2 units appear to be statistically significant?
+
+```{r}
+set.seed(7000)
+final_data <- df_baseball_clean
+
+final_data <- final_data |>
+  mutate(is_fastball = factor(as.integer(pitch_type %in% c("SI", "FF", "CU", "FA"))))
+```
+
+```{r}
+#| label: graph of variability between random 10 batters (number of hits)
+
+top_batters <- final_data |>
+  distinct(batter) |>  
+  slice_sample(n = 10)  
+
+filtered_data <- final_data |>
+  filter(batter %in% top_batters$batter)  
+
+ggplot(filtered_data, aes(x = batter, y = hit_distance_sc)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  labs(title = "Distance Hit by Batter",
+       x = "Batter ID",
+       y = "Distance (ft)") +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+model0 <- lm(hit_distance_sc ~ batter, data= final_data)
+anova(model0)
+```
+
+
+Based on the results of an ANOVA fitting hit distance by batter, we have strong evidence that batter explains a significant amount of variation in hit distance (F = 2.6984, p < .0001). We will proceed with caution because we have a small F-value but a significant p-value. 
+
+2. Fit the “random intercepts only” (null) model. Interpret each of the estimated parameters in context. Interpret the intraclass correlation coefficient in context. Does the value of the ICC seem “substantial” to you? Report the likelihood, deviance, and AIC values for later comparison.
+
+```{r}
+nullmodel <- lmer(hit_distance_sc ~ 1 + (1 | batter), data=final_data)
+summary(nullmodel)
+
+ICC::ICCbare(y=final_data$hit_distance_sc, x = final_data$batter)
+
+logLik(nullmodel)
+performance(nullmodel)
+```
+
+$ \tau_0^2: $ The batter to batter variance in average hit distance is 292.9.
+
+$ \sigma^2: $ The variance in average hit distance for each batter is 17985.5.
+
+$ \beta_0: $ The average hit distance across all batters is 164.116.
+
+$$ ICC: \frac{292.9}{292.9 + 17985.5} = 0.01602438$$ The correlation between two hits by the same batter is .016. 1.6% of the variation is explained by within batter variation in hit distance rather than between batters. This is not substantial. The log likelihood of the null model is -384430.9. The deviance is 134.11 feet. The AIC is 7.689*10^5. 
+
+
+3. Add 1-3 Level 1 variables. Carry out a likelihood ratio test to compare this model to the model in step 2 (using ML, clearly explain how you find the chi-square value and df). Include details. Also report/compare the AIC values to the intercepts only model. Calculate a “proportion of variation explained” for this set of variables and interpret the results in context (be clear variation in what). Did the Level 2 variance decrease? What does the tell you? Remove (one at a time) any insignificant variables.
+
+
+```{r}
+#| label: adding level 1 variables
+
+# dist by launch angle, pitch type, launch speed, random batter intercepts
+model1 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + is_fastball + (1 | batter), data=final_data, REML = FALSE)
+summary(model1)
+anova(nullmodel, model1)
+performance(model1)
+
+# dist by launch angle, launch speed, random batter intercepts
+model2 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | batter), data=final_data, REML = FALSE)
+
+# dist by launch angle, random batter intercepts
+model3 <- lmer(hit_distance_sc ~ launch_angle_gmc + (1 | batter), data=final_data, REML = FALSE)
+anova(nullmodel, model3, model2, model1)
+
+# dist by launch angle, random pitch type intercepts, launch speed, random batter intercepts
+model4 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | is_fastball) + (1 | batter), data=final_data, REML = FALSE)
+performance(model4)
+```
+
+**In model 1, we added our three level 1 variables of interest (launch speed, launch angles, and if its a fastball) and used a likelihood ratio test to compare. Using an anova to compare the null model and model 1, the likelihood test gave us a large chi-square test statistic of 6456 and a p-value less than 0.001. The likelihood test had 3 degrees of freedom, which is the difference in the number of parameters between the null model and model 1. The AIC of model 1 is 119931 which is less than the null model AIC of 126381. Model 1 also has a BIC of 119974 which is less than the null models BIC of 126402. Therefore there is strong evidence to conclude that model 1 with all the level 1 variables is a better fit for the data than the random intercepts null model.**
+
+**The level 1 variables is_fastball, launch angle, and launch speed explain (R^2 = 0.481) 48.1% the variation in hit distance. Yes, the level 2 variance decreased from 303.2 (in null model) to 50.42 (in model 1).**
+
+**We then created model 2 that includes launch speed, launch angle, and batter random intercepts. We also created model 3 which only includes launch angle and batter random intercepts. We then ran an anova of models 1, 2, and 3. We found that model 2, is a better fit of the data than model 3 and launch speed is a statistically significant predictor of hit distance (chi-square = 1530, p-value < 0.001). However, we found that model 1 was not significantly better fit of the data than model 2 and the variable is_fastball is not a statistically significant predictor of hit distance (chi-square = 3.7194, p-value = 0.05378).**
+
+4. Add 1-3 Level 2 variables. Carry out a likelihood ratio test to compare the models (using ML). Include details. Also report/compare the AIC values. Calculate a “proportion of variation explained” for each level and interpret the results in context. Remove (one at a time) any insignificant variables.
+
+```{r}
+# dist by launch angle, pitch type, launch speed, stand, random batter intercepts
+model5 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + is_fastball + stand + (1 | batter), data = final_data, REML = FALSE)
+
+summary(model5)
+anova(model1, model5)
+
+
+performance(model5)
+```
+
+**Model 5 includes three level 1 variables and where the batter stands as level 2 variable. Model 5 has an AIC of 119932 which is barely larger than the AIC for model 1 which is 119931. **
+
+$$\frac{49.75}{49.75 + 9411.66} = 0.005258$$
+**Level 2 batter variance explains 0.5% of the total variance in distance hit.**
+
+$$\frac{9411.66}{49.75 + 9411.66} = 0.9947418$$
+**Level 1 hit variance explains 99.5% of the total variation in distance hit.**
+
+**Since we only have one level 2 variable, the likelihood test for model 1 and model 5 produces a p-value of  0.6049 and a chi-square statistic of 0.2676 (df=1). This tells us that stand is not a statistically significant predictor of distance hit.**
+
+5. Consider random slopes for one Level 1 variable. (This could involve putting back in one of the variables that was removed earlier...) Include a graph illustrating variability in the estimated random slopes and discuss what you learn in context. Interpret the amount of group-to-group variation in these slopes in context. Once you have a model with at least one set of random slopes, compare this model to the model in step 4, is adding random slopes a significant improvement (REML, be clear how you are determining degrees of freedom)?
+
+```{r}
+model6 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+summary(model6)
+
+preds = predict(model6, newdata = final_data)
+ggplot(final_data, aes(x = launch_angle_gmc , y = preds , group = batter)) +
+geom_smooth(method = "lm", alpha = .5, se = FALSE) +
+geom_abline(intercept = 165.80, slope = 2.86 + 2.53) +
+geom_abline(intercept = 165.80 - 2.74, slope = 2.86 + 2.53) +
+geom_abline(intercept = 165.80 + .23, slope = 2.86 + 2.53) +
+geom_abline(intercept = 165.80 + .23 - 2.74, slope = 2.86 + 2.53) +
+  theme_classic()
+```
+
+The least amount of batter-to-batter variation in estimated launch angle slopes occurs at about -20 degrees.
+
+```{r}
+#| label: compare to model in part 4
+
+anova(model5, model6)
+```
+
+Compared to model5 which we fit in part 4, based on the results of adding random slopes for grand mean centered launch angle this seemed to improve the model, as shown by Chisq = 97.79 and p < .0001. We have 2 df for this test because adding random slopes introduced a variance component for the random launch angle slopes, as well as the covariance between the random intercepts and the random launch angle slopes.
+
+6. Add and interpret a cross-level interaction (you may have to use insignificant variables, focus on interpreting the interaction). Are you able to explain much of the slope variation you found in step 5? Is this a significantly better model?
+
+```{r}
+model7 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + is_fastball*stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+summary(model7)
+anova(model6,model7)
+
+```
+We fit a model with an interaction between stand and fastball. This is a significantly better model because when doing an ANOVA comparing model 6 and our new model, we got a p-value of 0.022. This means we have evidence that the model with an interaction term is significantly better, and therefore explains more variation in the centered hit distance, than model 6. This new model explains a little bit more of the slope variation in the random centered launch angle slope. It used to have a variation of 0.161 and now, with the interaction, it has a variation of 0.1681. 
+
+```{r}
+num_vars <- final_data |>
+  mutate(log_la = log(launch_angle_gmc),
+         sqrt_ls = sqrt(launch_angle_gmc),
+         launch_angle_sqd = launch_angle_gmc^2) |>
+  select(hit_distance_sc, launch_angle_gmc, launch_speed_gmc, launch_angle_sqd)
+
+ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Launch Angle", "Launch Speed", "Launch Angle^2"))
+
+final_data |>
+  ggplot(aes(x = stand, y=hit_distance_sc)) +
+  geom_boxplot() +
+  facet_grid(~is_fastball) +
+  theme_bw() + 
+  labs(title ="Interaction Between Dominant Hand and Fastball", x = "Dominant Hand", y = "Hit Distance")
+
+```
+
+```{r}
+full_model <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + is_fastball + stand + (1 | batter), data=final_data, REML = TRUE)
+
+model8 <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + stand + is_fastball  + (1 + launch_speed_gmc + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+summary(model8)
+anova(full_model, model8)
+
+model10 <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + stand + is_fastball + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+anova(full_model, model10)
+
+model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+anova(nullmodel, model11)
+
+performance(model10)
+summary(model10)
+performance(model8)
+performance(model11)
+
+
+plot(allEffects(model8), main = "Stand Effects")
+
+plot(effect(term="stand", mod=model8), xlab="Dominant Side", ylab="Hit Distance (ft)", main = "Dominant Side Effect")
+plot(effect(term="is_fastball", mod=model8), xlab="Is a Fastball", ylab="Hit Distance (ft)", main = "Fastball Effect")
+plot(effect(term="launch_angle_gmc*launch_speed_gmc", mod=model8), xlab="Launch Angle", ylab="Hit Distance (ft)", main="Launch Angle and Launch Speed Interaction Effect")
+
+final_data |>
+  ggplot(aes(x = stand, y = hit_distance_sc)) +
+  geom_boxplot() +
+  theme_bw() +
+  facet_grid(~is_fastball) +
+  labs(title = "Interaction between Dominant Side and Whether Pitch is a Fastball",
+       x = "Dominant Side",
+       y = "Hit Distance (ft)")
+
+```
+
+Keep in mind: Doing what I tell you to do is ~ B work. Doing more or less will move your grade up or down. Possible Extras: Enhanced graphs; More than 2 levels; Compare model in step 3 to a random effects ANCOVA model (using OLS); Testing additional random slopes; Cross validation (or at least consider possible multiple comparison issues); Including and interpreting confidence intervals
