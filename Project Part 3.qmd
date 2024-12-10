@@ -62,7 +62,6 @@ final_data <- hits_over_100 |>
   slice_head(n = 100) |>  
   ungroup()  
 
-
 final_data |> distinct(batter) |> nrow()  # Should return 100
 final_data |> group_by(batter) |> summarise(total_hits = n()) 
 
