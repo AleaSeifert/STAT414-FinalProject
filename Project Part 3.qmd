@@ -212,10 +212,11 @@ We fit a model with an interaction between stand and fastball. This is a signifi
 ```{r}
 num_vars <- final_data |>
   mutate(log_la = log(launch_angle_gmc),
-         sqrt_ls = sqrt(launch_angle_gmc)) |>
-  select(hit_distance_sc, launch_angle_gmc, launch_speed_gmc)
+         sqrt_ls = sqrt(launch_angle_gmc),
+         launch_angle_sqd = launch_angle_gmc^2) |>
+  select(hit_distance_sc, launch_angle_gmc, launch_speed_gmc, launch_angle_sqd)
 
-ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Launch Angle", "Launch Speed"))
+ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Launch Angle", "Launch Speed", "Launch Angle^2"))
 
 final_data |>
   ggplot(aes(x = stand, y=hit_distance_sc)) +
@@ -236,12 +237,13 @@ anova(full_model, model8)
 model10 <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + stand + is_fastball + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
 anova(full_model, model10)
 
-model11 <- lmer(hit_distance_sc ~ I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
 anova(nullmodel, model11)
 
 performance(model10)
 summary(model10)
 performance(model8)
+performance(model11)
 
 
 plot(allEffects(model8), main = "Stand Effects")
