@@ -22,13 +22,17 @@ load("df_baseball_clean.RData")
 ```
 
 ```{r}
+set.seed(7000)
 baseball_sample <- df_baseball_clean[sample(nrow(df_baseball_clean), 1000), ] |> arrange(desc(batter))
 head(baseball_sample)
 ```
 
-Include the following modeling steps. This may not find the best model, but will be an opportunity for you to build a multilevel model in a coherent fashion. You should be using your cleaned data set with quantitative variables grand-mean centered.
 
-1.  Include a graph exploring the variability in the response variable across the Level-2 units. Fit an ANOVA using OLS for your response variable and the Level 2 grouping variable (the Level 2 units). Does the variation in the response across the Level 2 units appear to be statistically significant?
+Include the following modeling steps. This may not find the best model, but will be an opportunity for you to build a multilevel model in a coherent fashion. You should be using your cleaned data set with
+quantitative variables grand-mean centered.
+
+1. Include a graph exploring the variability in the response variable across the Level-2 units. Fit an ANOVA using OLS for your response variable and the Level 2 grouping variable (the Level 2 units). Does the variation in the response across the Level 2 units appear to be statistically significant?
+
 
 ```{r}
 balanced_sample <- df_baseball_clean |>
@@ -38,6 +42,7 @@ balanced_sample <- df_baseball_clean |>
 ```
 
 ```{r}
+set.seed(7000)
 hits_over_100 <- df_baseball_clean |>
   group_by(batter) |>
   mutate(total_hits = n()) |>
@@ -82,14 +87,16 @@ ggplot(filtered_data, aes(x = batter, y = hit_distance_sc)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+
 ```{r}
 model0 <- lm(hit_distance_sc ~ batter, data= final_data)
 anova(model0)
 ```
 
-Based on the results of an ANOVA fitting hit distance by batter, we have strong evidence that batter explains a significant amount of variation in hit distance (F = 2.5527, p \< .0001). We will proceed with caution because we have a small F-value but a significant p-value.
 
-2.  Fit the “random intercepts only” (null) model. Interpret each of the estimated parameters in context. Interpret the intraclass correlation coefficient in context. Does the value of the ICC seem “substantial” to you? Report the likelihood, deviance, and AIC values for later comparison.
+Based on the results of an ANOVA fitting hit distance by batter, we have strong evidence that batter explains a significant amount of variation in hit distance (F = 2.6984, p < .0001). We will proceed with caution because we have a small F-value but a significant p-value. 
+
+2. Fit the “random intercepts only” (null) model. Interpret each of the estimated parameters in context. Interpret the intraclass correlation coefficient in context. Does the value of the ICC seem “substantial” to you? Report the likelihood, deviance, and AIC values for later comparison.
 
 ```{r}
 nullmodel <- lmer(hit_distance_sc ~ 1 + (1 | batter), data=final_data)
@@ -97,18 +104,18 @@ summary(nullmodel)
 
 ICC::ICCbare(y=final_data$hit_distance_sc, x = final_data$batter)
 
-summary(nullmodel)
 logLik(nullmodel)
 performance(nullmodel)
 ```
 
-$$ \tau_0^2: $$ The batter to batter variance in average hit distance is 278.2.
+$ \tau_0^2: $ The batter to batter variance in average hit distance is 303.2.
 
-$$ \sigma^2: $$ The variance in average hit distance for each batter is 17917.6.
+$ \sigma^2: $ The variance in average hit distance for each batter is 17849.9.
 
-$$ \beta_0: $$ The average hit distance across all batters is 163.336.
+$ \beta_0: $ The average hit distance across all batters is 167.743.
 
-$$ ICC: \frac{278.2}{278.2 + 17917.6} = 0.01529 \implies$$ The correlation between two hits by the same batter is .015. 1.5% of the variation is explained by within batter variation in hit distance rather than between batters. This is not substantial. The log likelihood of the null model is -63201.76. The deviance is 133.857 feet. The AIC is 126402.
+$$ ICC: \frac{303.2}{303.2 + 17849.9} = 0.01670238$$ The correlation between two hits by the same batter is .015. 1.5% of the variation is explained by within batter variation in hit distance rather than between batters. This is not substantial. The log likelihood of the null model is -63185.58. The deviance is 133.604 feet. The AIC is 126400. 
+
 
 3. Add 1-3 Level 1 variables. Carry out a likelihood ratio test to compare this model to the model in step 2 (using ML, clearly explain how you find the chi-square value and df). Include details. Also report/compare the AIC values to the intercepts only model. Calculate a “proportion of variation explained” for this set of variables and interpret the results in context (be clear variation in what). Did the Level 2 variance decrease? What does the tell you? Remove (one at a time) any insignificant variables.
 
@@ -163,20 +170,53 @@ $$\frac{9411.66}{49.75 + 9411.66} = 0.9947418$$
 
 **Since we only have one level 2 variable, the likelihood test for model 1 and model 5 produces a p-value of  0.6049 and a chi-square statistic of 0.2676 (df=1). This tells us that stand is not a statistically significant predictor of distance hit.**
 
-5.  Consider random slopes for one Level 1 variable. (This could involve putting back in one of the variables that was removed earlier...) Include a graph illustrating variability in the estimated random slopes and discuss what you learn in context. Interpret the amount of group-to-group variation in these slopes in context. Once you have a model with at least one set of random slopes, compare this model to the model in step 4, is adding random slopes a significant improvement (REML, be clear how you are determining degrees of freedom)?
+5. Consider random slopes for one Level 1 variable. (This could involve putting back in one of the variables that was removed earlier...) Include a graph illustrating variability in the estimated random slopes and discuss what you learn in context. Interpret the amount of group-to-group variation in these slopes in context. Once you have a model with at least one set of random slopes, compare this model to the model in step 4, is adding random slopes a significant improvement (REML, be clear how you are determining degrees of freedom)?
 
 ```{r}
-model6 <- lmer(hit_distance_sc ~ is_fastball + launch_speed_gmc + stand + (launch_angle_gmc | batter), data=final_data)
+model6 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
 summary(model6)
-unique(final_data$pitch_type)
-ranef(model6)
+tibble(anova(model5, model6))
+
+anova_table <- anova(model5, model6)
+
+# Convert ANOVA result to tibble
+anova_tibble <- tibble(
+  Model = c("model5", "model6"),
+  npar = anova_table$npar,
+  AIC = anova_table$AIC,
+  BIC = anova_table$BIC)
+
+anova_tibble
 
 preds = predict(model6, newdata = final_data)
-ggplot(final_data, aes(x = , y = preds , group = Beach, color = BeachAsFactor )) +
+ggplot(final_data, aes(x = launch_angle_gmc , y = preds , group = batter)) +
 geom_smooth(method = "lm", alpha = .5, se = FALSE) +
-geom_abline(intercept = 6.58, slope = -2.83) +
-geom_point(data = rikzdata, aes(y = Richness, color=BeachAsFactor), alpha = .5) +
+geom_abline(intercept = 165.80, slope = 2.86 + 2.53) +
+geom_abline(intercept = 165.80 - 2.74, slope = 2.86 + 2.53) +
+geom_abline(intercept = 165.80 + .23, slope = 2.86 + 2.53) +
+geom_abline(intercept = 165.80 + .23 - 2.74, slope = 2.86 + 2.53) +
   theme_bw()
 ```
 
-6.  Add and interpret a cross-level interaction (you may have to use insignificant variables, focus on interpreting the interaction). Are you able to explain much of the slope variation you found in step 5? Is this a significantly better model? Keep in mind: Doing what I tell you to do is \~ B work. Doing more or less will move your grade up or down. Possible Extras: Enhanced graphs; More than 2 levels; Compare model in step 3 to a random effects ANCOVA model (using OLS); Testing additional random slopes; Cross validation (or at least consider possible multiple comparison issues); Including and interpreting confidence intervals
+The least amount of batter-to-batter variation in estimated launch angle slopes occurs at about -20 degrees.
+
+```{r}
+#| label: compare to model in part 4
+
+anova(model5, model6)
+```
+
+Compared to model5 which we fit in part 4, based on the results of adding random slopes for grand mean centered launch angle this seemed to improve the model, as shown by Chisq = 97.79 and p < .0001. We have 2 df for this test because adding random slopes introduced a variance component for the random launch angle slopes, as well as the covariance between the random intercepts and the random launch angle slopes.
+
+6. Add and interpret a cross-level interaction (you may have to use insignificant variables, focus on interpreting the interaction). Are you able to explain much of the slope variation you found in step 5? Is this a significantly better model?
+
+```{r}
+model7 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + is_fastball*stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+summary(model7)
+anova(model6,model7)
+
+```
+We fit a model with an interaction between stand and fastball. This is a significantly better model because when doing an ANOVA comparing model 6 and our new model, we got a p-value of 0.022. This means we have evidence that the model with an interaction term is significantly better, and therefore explains more variation in the centered hit distance, than model 6. This new model explains a little bit more of the slope variation in the random centered launch angle slope. It used to have a variation of 0.161 and now, with the interaction, it has a variation of 0.1681. 
+
+
+Keep in mind: Doing what I tell you to do is ~ B work. Doing more or less will move your grade up or down. Possible Extras: Enhanced graphs; More than 2 levels; Compare model in step 3 to a random effects ANCOVA model (using OLS); Testing additional random slopes; Cross validation (or at least consider possible multiple comparison issues); Including and interpreting confidence intervals
