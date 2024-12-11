@@ -20,13 +20,39 @@ library(effects)
 
 #df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
 
-load("df_baseball_clean.RData")
+#load("df_baseball_clean.RData")
+
+df_baseball_clean <- df_baseball |>
+  mutate(dist_from_cen = sqrt((plate_x^2) + (plate_z^2)),
+         pitch_type = factor(pitch_type),
+         game_type = factor(game_type),
+         batter = factor(batter),
+         stand = factor(stand),
+         type = factor(type),
+         zone = factor(zone),
+         p_throws = factor(p_throws)) |>
+  select(type, hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter, stand, plate_x, plate_z, pfx_x, pfx_z, release_speed, release_pos_x, release_pos_y, release_pos_z, zone, release_spin_rate, p_throws, balls, strikes, effective_speed, release_extension) |>
+  filter(type == "X") |>
+  drop_na() |>
+  mutate(dist_from_cen_gmc = dist_from_cen - mean(dist_from_cen),
+         hit_distance_gmc = hit_distance_sc - mean(hit_distance_sc),
+         launch_angle_gmc = launch_angle - mean(launch_angle),
+         launch_speed_gmc = launch_speed - mean(launch_speed),
+         release_speed_gmc = release_speed - mean(release_speed),
+         release_pos_x_gmc = release_pos_x - mean(release_pos_x),
+         release_pos_y_gmc = release_pos_y - mean(release_pos_y),
+         release_pos_z_gmc = release_pos_z - mean(release_pos_z),
+         release_spin_gmc = release_spin_rate - mean(release_spin_rate),
+         plate_x_gmc = plate_x - mean(plate_x),
+         plate_z_gmc = plate_z - mean(plate_z),
+         pfx_x_gmc = pfx_x - mean(pfx_x),
+         pfx_z_gmc = pfx_z - mean(pfx_z),
+         effective_speed_gmc = effective_speed - mean(effective_speed),
+         release_extension_gmc = release_extension - mean(release_extension))
 ```
 
 ```{r}
 set.seed(7000)
-baseball_sample <- df_baseball_clean
-head(baseball_sample)
 ```
 
 
@@ -241,5 +267,79 @@ final_data |>
        y = "Hit Distance (ft)")
 
 ```
+
+```{r}
+final_data |>
+  ggplot(aes(x = launch_angle_gmc, y = hit_distance_sc)) +
+  geom_point() + geom_smooth()
+
+final_data |> mutate(launch_angle_sqd = launch_angle_gmc^2) |>
+  ggplot(aes(x = launch_angle_sqd, y = hit_distance_sc)) +
+  geom_point() + geom_smooth()
+
+
+final_data |> mutate(launch_angle_sqrt = sqrt(launch_angle_gmc + 102)) |>
+  ggplot(aes(x = launch_angle_sqrt, y = hit_distance_sc)) +
+  geom_point() + geom_smooth()
+                     
+
+final_data |> mutate(launch_angle_ln = log(launch_angle_gmc + 102)) |>
+  ggplot(aes(x = launch_angle_ln, y = hit_distance_sc)) +
+  geom_point() + geom_smooth()
+
+final_data |> mutate(launch_angle_abs = abs(launch_angle_gmc)) |>
+  ggplot(aes(x = launch_angle_abs, y = hit_distance_sc)) +
+  geom_point() + geom_smooth()
+```
+
+```{r}
+model12 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + plate_x_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model13 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + plate_z_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model14 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + pfx_x_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model15 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + pfx_z_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model16 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + release_pos_x_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model17 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + release_speed_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model18 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + release_pos_y_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model19 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + release_pos_z_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model20 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + zone + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model21 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + release_spin_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model22 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + p_throws + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model23 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + balls + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model24 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + strikes + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model25 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + effective_speed_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+model26 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + release_extension_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+
+anova(model11, model12)
+anova(model11, model13)
+anova(model11, model14)
+anova(model11, model15)
+anova(model11, model16)
+anova(model11, model17)
+anova(model11, model18)
+anova(model11, model19)
+anova(model11, model20)
+anova(model11, model21)
+anova(model11, model22)
+anova(model11, model23)
+anova(model11, model24)
+anova(model11, model25)
+anova(model11, model26)
+# plate_x, plate_z, pfx_x, pfx_z, release_speed, release_pos_x, release_pos_y, release_pos_z, zone, release_spin_rate, p_throws, balls, strikes, effective_speed, release_extension
+```
+
 
 Keep in mind: Doing what I tell you to do is ~ B work. Doing more or less will move your grade up or down. Possible Extras: Enhanced graphs; More than 2 levels; Compare model in step 3 to a random effects ANCOVA model (using OLS); Testing additional random slopes; Cross validation (or at least consider possible multiple comparison issues); Including and interpreting confidence intervals
