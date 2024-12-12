@@ -253,13 +253,15 @@ model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launc
 
 summary(model11)
 performance(model11)
+```
 
-performance(model11)|> 
+```{r}
+table <- performance(model11)|> 
   kableExtra::kbl(
                   col.names = c("AIC", 
                                 "BIC",
                                 "R-squared conditional",
-                                "",
+                              
                                 "",
                                 "",
                                 "",
@@ -268,13 +270,14 @@ performance(model11)|>
                   digits = 3,
                   booktabs = TRUE
                   )
+table
 ```
 
 **Interpretation of all the variables**
 
-1.fixed intercept:
+1. Fixed Intercept:
 
-2.
+2. 
 
 3.  
 
@@ -308,6 +311,7 @@ performance(model11)|>
 
 ```{r}
 #| label: residual plots
+plot(fitted(model11), resid(model11))
 ```
 
 ## Discussion {#discussion}
