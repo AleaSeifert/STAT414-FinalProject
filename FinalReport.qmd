@@ -70,6 +70,38 @@ We chose this project because baseball is not only fun to watch, but has various
 -   Indicate any modifications made to the data, recoding, or decisions about missing data
 
 ```{r}
+#| label: Grand Mean Centering
+df_baseball_clean <- df_baseball |>
+  mutate(dist_from_cen = sqrt((plate_x^2) + (plate_z^2)),
+         pitch_type = factor(pitch_type),
+         game_type = factor(game_type),
+         batter = factor(batter),
+         stand = factor(stand),
+         type = factor(type),
+         zone = factor(zone),
+         p_throws = factor(p_throws)) |>
+  select(type, hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter, stand, plate_x, plate_z, pfx_x, pfx_z, release_speed, release_pos_x, release_pos_y, release_pos_z, zone, release_spin_rate, p_throws, balls, strikes, effective_speed, release_extension) |>
+  filter(type == "X") |>
+  drop_na() |>
+  mutate(dist_from_cen_gmc = dist_from_cen - mean(dist_from_cen),
+         hit_distance_gmc = hit_distance_sc - mean(hit_distance_sc),
+         launch_angle_gmc = launch_angle - mean(launch_angle),
+         launch_speed_gmc = launch_speed - mean(launch_speed),
+         release_speed_gmc = release_speed - mean(release_speed),
+         release_pos_x_gmc = release_pos_x - mean(release_pos_x),
+         release_pos_y_gmc = release_pos_y - mean(release_pos_y),
+         release_pos_z_gmc = release_pos_z - mean(release_pos_z),
+         release_spin_gmc = release_spin_rate - mean(release_spin_rate),
+         plate_x_gmc = plate_x - mean(plate_x),
+         plate_z_gmc = plate_z - mean(plate_z),
+         pfx_x_gmc = pfx_x - mean(pfx_x),
+         pfx_z_gmc = pfx_z - mean(pfx_z),
+         effective_speed_gmc = effective_speed - mean(effective_speed),
+         release_extension_gmc = release_extension - mean(release_extension))
+```
+
+
+```{r}
 #| label: Taking a Random Sample 
 set.seed(7000)
 baseball_sample <- df_baseball_clean[sample(nrow(df_baseball_clean), 1000), ] |> arrange(desc(batter))
@@ -111,16 +143,16 @@ ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", co
 
 ```{r}
 #| label: Categorical Analysis
+# Maya ADD slide plots 
 ```
 
 
 -   Summarize the results of your initial anova exploring the significance of the Level 2 grouping variable.
 
-
 ```{r}
-
+model0 <- lm(hit_distance_sc ~ batter, data= final_data)
+anova(model0)
 ```
-
 
 -   Summarize, including (with a useful picture), your null model and what you learn, including interpreting the ICC value in context.
 
@@ -147,37 +179,27 @@ ggplot(filtered_data, aes(x = batter, y = hit_distance_sc)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+```{r}
+nullmodel <- lmer(hit_distance_sc ~ 1 + (1 | batter), data=final_data)
+summary(nullmodel)
+
+ICC::ICCbare(y=final_data$hit_distance_sc, x = final_data$batter)
+
+logLik(nullmodel)
+performance(nullmodel)
+```
+
+$ \tau_0^2: $ The batter to batter variance in average hit distance is 292.9.
+
+$ \sigma^2: $ The variance in average hit distance for each batter is 17985.5.
+
+$ \beta_0: $ The average hit distance across all batters is 164.116.
+
+$$ ICC: \frac{292.9}{292.9 + 17985.5} = 0.01602438$$ The correlation between two hits by the same batter is .016. 1.6% of the variation is explained by within batter variation in hit distance rather than between batters. This is not substantial. The log likelihood of the null model is -384430.9. The deviance is 134.11 feet. The AIC is 7.689*10^5.  
+
+**ALL NEEDS TO BE CHANGED but should be interpretations^^^^**
+
 -   Brief discussion of how you arrived at your final model. Interpret all of the estimated parameters in your final model in context. Include at least one confidence interval or interval of random slopes and interpret in context. (But there shouldn’t really be much “commentary” in this section.) How much of the unexplained Level 1 and/or Level 2 variation in the null model is explained by your final model?
-
-# Fixed Effects
-
-
-```{r}
-#| label: Interaction effect graph
-final_data |>
-  ggplot(aes(x = stand, y=hit_distance_sc)) +
-  geom_boxplot() +
-  facet_grid(~is_fastball) +
-  theme_bw() + 
-  labs(title ="Interaction Between Dominant Hand and Fastball", x = "Dominant Hand", y = "Hit Distance")
-```
-
-#Random Effects
-
-```{r}
-model6 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
-summary(model6)
-
-ggplot(final_data, aes(x = launch_angle_gmc, y = hit_distance_sc)) +
-  geom_smooth(aes(group = batter),
-          method = "lm",
-          se     = FALSE,      # do NOT want the SE bands
-          linewidth   = 0.3) +   theme_bw()
-
-fits1 = fitted.values(model6, level =1)
-```
-
-
 
 -   Integrate the most relevant figures to help interpret the results with your discussion. This includes graphs illustrating fixed effects, random effects, and interactions.
 
@@ -194,274 +216,101 @@ fits1 = fitted.values(model6, level =1)
 -   Diagnostic analysis: Discussion and inclusion of residual plots (with commentary) for your final model
 
 
-
-Include the following modeling steps. This may not find the best model, but will be an opportunity for you to build a multilevel model in a coherent fashion. You should be using your cleaned data set with quantitative variables grand-mean centered.
-
-1.  Include a graph exploring the variability in the response variable across the Level-2 units. Fit an ANOVA using OLS for your response variable and the Level 2 grouping variable (the Level 2 units). Does the variation in the response across the Level 2 units appear to be statistically significant?
+#### Fixed Effects
 
 ```{r}
-balanced_sample <- df_baseball_clean |>
-  group_by(batter) |>
-  mutate(total_hits = n()) |>
-  filter(total_hits >= 100)
-```
-
-```{r}
-set.seed(7000)
-hits_over_100 <- df_baseball_clean |>
-  group_by(batter) |>
-  mutate(total_hits = n()) |>
-  filter(total_hits >= 100) |> 
-  ungroup()  
-
-random_batters <- hits_over_100 |>
-  distinct(batter) |>              
-  slice_sample(n = 100) |>         
-  pull(batter)                     
-
-final_data <- hits_over_100 |>
-  filter(batter %in% random_batters) |>
-  group_by(batter) |>
-  slice_head(n = 100) |>  
-  ungroup()  
-
-
-final_data |> distinct(batter) |> nrow()  # Should return 100
-final_data |> group_by(batter) |> summarise(total_hits = n()) 
-
-final_data <- final_data |>
-  mutate(is_fastball = as.integer(pitch_type %in% c("SI", "FF", "CU", "FA"))) |>
-  mutate(is_fastball = factor(is_fastball))
-```
-
-```{r}
-#| label: graph of variability between top 10 batters (number of hits)
-
-top_batters <- final_data |>
-  distinct(batter) |>  
-  slice_sample(n = 10)  
-
-filtered_data <- final_data |>
-  filter(batter %in% top_batters$batter)  
-
-ggplot(filtered_data, aes(x = batter, y = hit_distance_sc)) +
-  geom_boxplot(fill = "skyblue", color = "black") +
-  labs(title = "Distance Hit by Batter",
-       x = "Batter ID",
-       y = "Distance (ft)") +
-  theme_classic() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-```{r}
-model0 <- lm(hit_distance_sc ~ batter, data= final_data)
-anova(model0)
-```
-
-Based on the results of an ANOVA fitting hit distance by batter, we have strong evidence that batter explains a significant amount of variation in hit distance (F = 2.6984, p \< .0001). We will proceed with caution because we have a small F-value but a significant p-value.
-
-2.  Fit the “random intercepts only” (null) model. Interpret each of the estimated parameters in context. Interpret the intraclass correlation coefficient in context. Does the value of the ICC seem “substantial” to you? Report the likelihood, deviance, and AIC values for later comparison.
-
-```{r}
-nullmodel <- lmer(hit_distance_sc ~ 1 + (1 | batter), data=final_data)
-summary(nullmodel)
-
-ICC::ICCbare(y=final_data$hit_distance_sc, x = final_data$batter)
-
-logLik(nullmodel)
-performance(nullmodel)
-```
-
-\$ \tau\_0\^2: \$ The batter to batter variance in average hit distance is 303.2.
-
-\$ \sigma\^2: \$ The variance in average hit distance for each batter is 17849.9.
-
-\$ \beta\_0: \$ The average hit distance across all batters is 167.743.
-
-$$ ICC: \frac{303.2}{303.2 + 17849.9} = 0.01670238$$ The correlation between two hits by the same batter is .015. 1.5% of the variation is explained by within batter variation in hit distance rather than between batters. This is not substantial. The log likelihood of the null model is -63185.58. The deviance is 133.604 feet. The AIC is 126400.
-
-3.  Add 1-3 Level 1 variables. Carry out a likelihood ratio test to compare this model to the model in step 2 (using ML, clearly explain how you find the chi-square value and df). Include details. Also report/compare the AIC values to the intercepts only model. Calculate a “proportion of variation explained” for this set of variables and interpret the results in context (be clear variation in what). Did the Level 2 variance decrease? What does the tell you? Remove (one at a time) any insignificant variables.
-
-```{r}
-#| label: adding level 1 variables
-
-# dist by launch angle, pitch type, launch speed, random batter intercepts
-model1 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + is_fastball + (1 | batter), data=final_data, REML = FALSE)
-summary(model1)
-anova(nullmodel, model1)
-performance(model1)
-
-# dist by launch angle, launch speed, random batter intercepts
-model2 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | batter), data=final_data, REML = FALSE)
-
-# dist by launch angle, random batter intercepts
-model3 <- lmer(hit_distance_sc ~ launch_angle_gmc + (1 | batter), data=final_data, REML = FALSE)
-anova(nullmodel, model3, model2, model1)
-
-# dist by launch angle, random pitch type intercepts, launch speed, random batter intercepts
-model4 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + (1 | is_fastball) + (1 | batter), data=final_data, REML = FALSE)
-performance(model4)
-```
-
-**In model 1, we added our three level 1 variables of interest (launch speed, launch angles, and if its a fastball) and used a likelihood ratio test to compare. Using an anova to compare the null model and model 1, the likelihood test gave us a large chi-square test statistic of 6456 and a p-value less than 0.001. The likelihood test had 3 degrees of freedom, which is the difference in the number of parameters between the null model and model 1. The AIC of model 1 is 119931 which is less than the null model AIC of 126381. Model 1 also has a BIC of 119974 which is less than the null models BIC of 126402. Therefore there is strong evidence to conclude that model 1 with all the level 1 variables is a better fit for the data than the random intercepts null model.**
-
-**The level 1 variables is_fastball, launch angle, and launch speed explain (R\^2 = 0.481) 48.1% the variation in hit distance. Yes, the level 2 variance decreased from 303.2 (in null model) to 50.42 (in model 1).**
-
-**We then created model 2 that includes launch speed, launch angle, and batter random intercepts. We also created model 3 which only includes launch angle and batter random intercepts. We then ran an anova of models 1, 2, and 3. We found that model 2, is a better fit of the data than model 3 and launch speed is a statistically significant predictor of hit distance (chi-square = 1530, p-value \< 0.001). However, we found that model 1 was not significantly better fit of the data than model 2 and the variable is_fastball is not a statistically significant predictor of hit distance (chi-square = 3.7194, p-value = 0.05378).**
-
-4.  Add 1-3 Level 2 variables. Carry out a likelihood ratio test to compare the models (using ML). Include details. Also report/compare the AIC values. Calculate a “proportion of variation explained” for each level and interpret the results in context. Remove (one at a time) any insignificant variables.
-
-```{r}
-# dist by launch angle, pitch type, launch speed, stand, random batter intercepts
-model5 <- lmer(hit_distance_sc ~ launch_angle_gmc + launch_speed_gmc + is_fastball + stand + (1 | batter), data = final_data, REML = FALSE)
-
-summary(model5)
-anova(model1, model5)
-
-
-performance(model5)
-```
-
-**Model 5 includes three level 1 variables and where the batter stands as level 2 variable. Model 5 has an AIC of 119932 which is barely larger than the AIC for model 1 which is 119931.**
-
-$$\frac{49.75}{49.75 + 9411.66} = 0.005258$$ **Level 2 batter variance explains 0.5% of the total variance in distance hit.**
-
-$$\frac{9411.66}{49.75 + 9411.66} = 0.9947418$$ **Level 1 hit variance explains 99.5% of the total variation in distance hit.**
-
-**Since we only have one level 2 variable, the likelihood test for model 1 and model 5 produces a p-value of 0.6049 and a chi-square statistic of 0.2676 (df=1). This tells us that stand is not a statistically significant predictor of distance hit.**
-
-5.  Consider random slopes for one Level 1 variable. (This could involve putting back in one of the variables that was removed earlier...) Include a graph illustrating variability in the estimated random slopes and discuss what you learn in context. Interpret the amount of group-to-group variation in these slopes in context. Once you have a model with at least one set of random slopes, compare this model to the model in step 4, is adding random slopes a significant improvement (REML, be clear how you are determining degrees of freedom)?
-
-```{r}
-model6 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
-summary(model6)
-
-preds = predict(model6, newdata =              final_data)
-ggplot(final_data, aes(x = launch_angle_gmc , y = preds , group = batter)) +
-geom_smooth(method = "lm", alpha = .5, se = FALSE) +
-geom_abline(intercept = 165.80, slope = 2.86 + 2.53) +
-geom_abline(intercept = 165.80 - 2.74, slope = 2.86 + 2.53) +
-geom_abline(intercept = 165.80 + .23, slope = 2.86 + 2.53) +
-geom_abline(intercept = 165.80 + .23 - 2.74, slope = 2.86 + 2.53) +
-  theme_classic()
-```
-
-The least amount of batter-to-batter variation in estimated launch angle slopes occurs at about -20 degrees.
-
-```{r}
-#| label: compare to model in part 4
-
-anova(model5, model6)
-```
-
-Compared to model5 which we fit in part 4, based on the results of adding random slopes for grand mean centered launch angle this seemed to improve the model, as shown by Chisq = 97.79 and p \< .0001. We have 2 df for this test because adding random slopes introduced a variance component for the random launch angle slopes, as well as the covariance between the random intercepts and the random launch angle slopes.
-
-6.  Add and interpret a cross-level interaction (you may have to use insignificant variables, focus on interpreting the interaction). Are you able to explain much of the slope variation you found in step 5? Is this a significantly better model?
-
-```{r}
-model7 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + is_fastball*stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
-summary(model7)
-anova(model6,model7)
-
-```
-
-We fit a model with an interaction between stand and fastball. This is a significantly better model because when doing an ANOVA comparing model 6 and our new model, we got a p-value of 0.022. This means we have evidence that the model with an interaction term is significantly better, and therefore explains more variation in the centered hit distance, than model 6. This new model explains a little bit more of the slope variation in the random centered launch angle slope. It used to have a variation of 0.161 and now, with the interaction, it has a variation of 0.1681.
-
-```{r}
-num_vars <- final_data |>
-  mutate(log_la = log(launch_angle_gmc),
-         sqrt_ls = sqrt(launch_angle_gmc),
-         launch_angle_sqd = launch_angle_gmc^2) |>
-  select(hit_distance_sc, launch_angle_gmc, launch_speed_gmc, launch_angle_sqd)
-
-ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Launch Angle", "Launch Speed", "Launch Angle^2"))
-
+#| label: Interaction effect graph
 final_data |>
   ggplot(aes(x = stand, y=hit_distance_sc)) +
   geom_boxplot() +
   facet_grid(~is_fastball) +
   theme_bw() + 
   labs(title ="Interaction Between Dominant Hand and Fastball", x = "Dominant Hand", y = "Hit Distance")
-
 ```
 
 ```{r}
-full_model <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + is_fastball + stand + (1 | batter), data=final_data, REML = TRUE)
-
-model8 <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + stand + is_fastball  + (1 + launch_speed_gmc + launch_angle_gmc | batter), data=final_data, REML = TRUE)
-summary(model8)
-anova(full_model, model8)
-
-model10 <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + stand + is_fastball + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
-anova(full_model, model10)
-
-model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
-anova(nullmodel, model11)
-
-performance(model10)
-summary(model10)
-performance(model8)
-performance(model11)
-
-
-plot(allEffects(model8), main = "Stand Effects")
-
-plot(effect(term="stand", mod=model8), xlab="Dominant Side", ylab="Hit Distance (ft)", main = "Dominant Side Effect")
-plot(effect(term="is_fastball", mod=model8), xlab="Is a Fastball", ylab="Hit Distance (ft)", main = "Fastball Effect")
-plot(effect(term="launch_angle_gmc*launch_speed_gmc", mod=model8), xlab="Launch Angle", ylab="Hit Distance (ft)", main="Launch Angle and Launch Speed Interaction Effect")
-
-final_data |>
-  ggplot(aes(x = stand, y = hit_distance_sc)) +
-  geom_boxplot() +
-  theme_bw() +
-  facet_grid(~is_fastball) +
-  labs(title = "Interaction between Dominant Side and Whether Pitch is a Fastball",
-       x = "Dominant Side",
-       y = "Hit Distance (ft)")
 
 ```
 
-Keep in mind: Doing what I tell you to do is \~ B work. Doing more or less will move your grade up or down. Possible Extras: Enhanced graphs; More than 2 levels; Compare model in step 3 to a random effects ANCOVA model (using OLS); Testing additional random slopes; Cross validation (or at least consider possible multiple comparison issues); Including and interpreting confidence intervals
+
+#### Random Effects
+
+```{r}
+#| label: Random Slopes graph
+model6 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+summary(model6)
+
+ggplot(final_data, aes(x = launch_angle_gmc, y = hit_distance_sc)) +
+  geom_smooth(aes(group = batter),
+          method = "lm",
+          se     = FALSE,      # do NOT want the SE bands
+          linewidth   = 0.3) +   theme_bw()
+
+fits1 = fitted.values(model6, level =1)
+```
+
+-including random slopes interval
+
+
+#### Final Model
+
+```{r}
+#| Final Model
+model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+anova(nullmodel, model11)
+```
+
+
+**Interpretation of all the variables**
+
+**How much of the unexplained Level 1 and/or Level 2 variation in the null model is explained by your final model?**
+
+```{r}
+#| label: residual plots
+```
+
 
 ## Discussion {#discussion}
 
 Describe how the results help answer your research questions and what was most\
 interesting from your analysis. In fact, the first paragraph of the Discussion is very\
 important – in professional journals, it is often the first and sometimes the only\
-paragraph that is read in a paper. After the first sentence highlights primary results, the\
-remainder of the first paragraph might compare your results to others in the literature or include interesting secondary results.
+paragraph that is read in a paper. After the first sentence highlights primary results, the remainder of the first paragraph might compare your results to others in the literature or include interesting secondary results.
 
 -   Discuss possible implications of the results in the context of the research question.
 
--   Identify any limitations of your study. Discuss the potential impact of such limitations on\
-    the conclusions. (e.g., potential confounding variables, generalizability - Don’t give generic statements of possible causation and generalizability, but thoughtfully discuss\
-    relevant issues – confounding variables, representativeness of the sample, etc.)
+****
+
+-   Identify any limitations of your study. Discuss the potential impact of such limitations onthe conclusions. (e.g., potential confounding variables, generalizability - Don’t give generic statements of possible causation and generalizability, but thoughtfully discuss relevant issues – confounding variables, representativeness of the sample, etc.)
 
 -   Identify strengths and weaknesses of your analysis.
 
--   Make suggestions for future research. Identify important next steps that a researcher\
-    could take to build on your work.
+-   Make suggestions for future research. Identify important next steps that a researcher could take to build on your work.
+
+
+****
 
 {{< pagebreak >}}
 
-## References {.unnumbered}
+## Appendix {.unnumbered}
 
-```         
-```
+Make sure you submit your raw data and make sure I know definitions of important
+variables and the source of the data.
 
-```         
-```
+- Your reproducible model building details.
 
-```         
-```
+- Tables and figures that are informative but were not referenced specifically in the main report. Include a short annotation – one or two sentences on what they show.
 
-```         
-```
-
-```         
-```
-
-```         
-```
+- Description of statistical modeling steps that were not included in the main body of your report. Possible entries here include:
+  - Evaluation of assumptions.
+  - Outlier analysis and how you decided to deal with any outliers along with rationale
+for your decision.
+  - Describe hypotheses testing you performed during model building and how you
+decided on the explanatory variables you ultimately included in your final model.
+  - Assessment of the final model.
+  - If applicable: How you went from the model output in R to interpretations in your report(e.g. exponentiate coefficients, then take inverse)
+  - Anticipate questions someone might have after reading your report, and make sure those
+questions can be answered with information in the appendix.
+  -A citation for any reference article(s) you included in your proposal. Also include a link, if appropriate
 
 ## 
