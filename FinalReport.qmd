@@ -231,6 +231,23 @@ fits1 = fitted.values(model11, level =1)
 #label 
 ```
 
+
+```{r}
+#| "Effects" plot (intercepts vs slopes)
+
+ranef(model11)$batter
+ranef(model11)$batter[,1]
+ranef(model11)$batter[,2]
+plot(ranef(model11)$batter[,2]~ranef(model11)$batter[,1], ylab = "Slope effects for each batter", xlab="Intercept effects for each batter", main = "Random Effects of Batters: Intercept vs. Slope")
+abline(lm(ranef(model11)$batter[,2]~ ranef(model11)$batter[,1]))
+
+
+slopes= fixef(model11)[[2]]+ranef(model11)$batter[,2]
+intercepts = fixef(model11)[[1]]+ranef(model11)$batter[,1]
+plot(slopes ~ intercepts, xlab = "Predicted Intercepts for Each Batter", ylab="Predicted Slopes for Each Batter", main= "Predicted Hitting Performance by Batter")
+abline(lm(slopes~intercepts))
+```
+
 -including random slopes interval and significance
 
 #### Final Model
