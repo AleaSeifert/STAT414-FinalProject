@@ -64,9 +64,10 @@ We chose this project because baseball is not only fun to watch, but has various
 
 -   Briefly describe your data, where your data came from (source), definitions of important variables, and how the data were collected. You should include a variables table and/or diagram representing your study.
 
-    The data comes from Baseball Savant which records various aspects of plate appearances in MLB games. The data recorded comes from 4/2/2024 to 6/30/2024. This documentation was available at [**Baseball Savant**](https://baseballsavant.mlb.com/csv-docs) and can be downloaded at [**Share Point**](https://yaleedu-my.sharepoint.com/personal/brian_macdonald_yale_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fbrian%5Fmacdonald%5Fyale%5Fedu%2FDocuments%2Fservice%2FCSAS%2F2025%2D04%2D11%20%2D%20CSAS%20at%20Yale%2Fdata%2Echallenge%2Fdata&ga=1)**.** The data was collected from a Statcase system which includes various cameras that are dedicated to tracking pitches, hits, and players. In the dataset, there are over 90 variables about all aspects of an mlb game, but we will only be looking at a few variables of interest.
+    \*The data comes from Baseball Savant which records various aspects of plate appearances in MLB games. The data recorded games over the 2024 regular season from the beginning of April through June. This documentation was available at [**Baseball Savant**](https://baseballsavant.mlb.com/csv-docs) and can be downloaded at [**Share Point**](https://yaleedu-my.sharepoint.com/personal/brian_macdonald_yale_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fbrian%5Fmacdonald%5Fyale%5Fedu%2FDocuments%2Fservice%2FCSAS%2F2025%2D04%2D11%20%2D%20CSAS%20at%20Yale%2Fdata%2Echallenge%2Fdata&ga=1)**.** The data was collected from a Statcast system which includes various cameras that are dedicated to tracking quantitative data from plate appearances with respect to both the pitcher and the batter in addition to data on the game states. In the dataset, there are over 90 variables about all aspects of an MLB game, but through literary analysis and with our goal of using variables that are directly observable from a batter’s role, we reduced our model to include launch_angle_gmc (the launch angle of the ball off the swing), launch_angle_gmc$^2$ (squared term for launch angle of the ball, to account for curve in the data), launch_speed_gmc (the launch speed of the ball off the swing), batter (the batter’s preferred stance side), is_fastball (whether a pitch was a type fastball or not), and p_throws (which arm a pitcher threw with). These variables are displayed in the above image.
 
--   Indicate any modifications made to the data, recoding, or decisions about missing data
+Initially the data had 346,250 observations, but we filtered it so that only observations on balls that were hit into play remained, and NA values removed as well, since these were mainly in variables that were more complex and simply not measured most of the time. This left us with 60,482 observations. We also filtered out hits that flew a distance of 0, as this did not make sense to us, since this would mean the ball fell straight down, as well as hits that had launch angles < 0, since hitting the ball at the ground would not cause it to travel far. All quantitative variables included were then grand mean centered so as to improve interpretability in the final model. Originally there had been a pitch_type variable, but during analysis we found that only the categories that represent fastball types (four-seam, two-seam, cutter) after dummification were statistically significant, so we recoded these to a single indicator variable is_fastball which has a 1 if the pitch was a fastball and 0 if not.
+
 
 ```{r}
 #| label: Grand Mean Centering
@@ -79,7 +80,9 @@ final_data <- df_baseball |>
          type = factor(type),
          p_throws = factor(p_throws)) |>
   select(type, hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter, stand, p_throws) |>
-  filter(type == "X") |>
+  filter(type == "X",
+         hit_distance_sc > 0,
+         launch_angle > 0) |>
   drop_na() |>
   mutate(dist_from_cen_gmc = dist_from_cen - mean(dist_from_cen),
          hit_distance_gmc = hit_distance_sc - mean(hit_distance_sc),
@@ -92,7 +95,7 @@ final_data <- df_baseball |>
 
 ```{r}
 #| label: PitchType Variable Coding 
-final_data <- df_baseball_clean |>
+final_data <- final_data |>
   mutate(is_fastball = as.integer(pitch_type %in% c("SI", "FF", "CU", "FA"))) |>
   mutate(is_fastball = factor(is_fastball))
 ```
@@ -254,7 +257,7 @@ abline(lm(slopes~intercepts))
 
 ```{r}
 #| label: Final Model
-model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball + (1 + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
 
 summary(model11)
 performance(model11)
