@@ -70,33 +70,23 @@ We chose this project because baseball is not only fun to watch, but has various
 
 ```{r}
 #| label: Grand Mean Centering
-df_baseball_clean <- df_baseball |>
+final_data <- df_baseball |>
   mutate(dist_from_cen = sqrt((plate_x^2) + (plate_z^2)),
          pitch_type = factor(pitch_type),
          game_type = factor(game_type),
          batter = factor(batter),
          stand = factor(stand),
          type = factor(type),
-         zone = factor(zone),
          p_throws = factor(p_throws)) |>
-  select(type, hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter, stand, plate_x, plate_z, pfx_x, pfx_z, release_speed, release_pos_x, release_pos_y, release_pos_z, zone, release_spin_rate, p_throws, balls, strikes, effective_speed, release_extension) |>
+  select(type, hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter, stand, p_throws) |>
   filter(type == "X") |>
   drop_na() |>
   mutate(dist_from_cen_gmc = dist_from_cen - mean(dist_from_cen),
          hit_distance_gmc = hit_distance_sc - mean(hit_distance_sc),
          launch_angle_gmc = launch_angle - mean(launch_angle),
-         launch_speed_gmc = launch_speed - mean(launch_speed),
-         release_speed_gmc = release_speed - mean(release_speed),
-         release_pos_x_gmc = release_pos_x - mean(release_pos_x),
-         release_pos_y_gmc = release_pos_y - mean(release_pos_y),
-         release_pos_z_gmc = release_pos_z - mean(release_pos_z),
-         release_spin_gmc = release_spin_rate - mean(release_spin_rate),
-         plate_x_gmc = plate_x - mean(plate_x),
-         plate_z_gmc = plate_z - mean(plate_z),
-         pfx_x_gmc = pfx_x - mean(pfx_x),
-         pfx_z_gmc = pfx_z - mean(pfx_z),
-         effective_speed_gmc = effective_speed - mean(effective_speed),
-         release_extension_gmc = release_extension - mean(release_extension))
+         launch_speed_gmc = launch_speed - mean(launch_speed))|>
+  mutate(is_fastball = as.integer(pitch_type %in% c("SI", "FF", "CU", "FA"))) |>
+  mutate(is_fastball = factor(is_fastball))
 ```
 
 
@@ -230,8 +220,6 @@ final_data |>
 
 ```{r}
 #| label: Random Slopes graph
-model6 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
-summary(model6)
 
 ggplot(final_data, aes(x = launch_angle_gmc, y = hit_distance_sc)) +
   geom_smooth(aes(group = batter),
@@ -239,7 +227,7 @@ ggplot(final_data, aes(x = launch_angle_gmc, y = hit_distance_sc)) +
           se     = FALSE,      # do NOT want the SE bands
           linewidth   = 0.3) +   theme_bw()
 
-fits1 = fitted.values(model6, level =1)
+fits1 = fitted.values(model11, level =1)
 #label 
 ```
 
@@ -249,7 +237,7 @@ fits1 = fitted.values(model6, level =1)
 
 ```{r}
 #| label: Final Model
-model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball + (1 + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
 
 summary(model11)
 performance(model11)
