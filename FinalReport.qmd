@@ -302,10 +302,11 @@ abline(lm(slopes~intercepts))
 
 ```{r include = FALSE}
 #| label: Final Model
-model11 <- lmer(hit_distance_gmc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + standR + is_fastball + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+model11 <- lmer(hit_distance_gmc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + standR + is_fastball + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
 
 summary(model11)
 performance(model11)
+confint(model11)
 ```
 
 ```{r}
@@ -362,11 +363,24 @@ table
 
 **How much of the unexplained Level 1 and/or Level 2 variation in the null model is explained by your final model?**
 
+did summary(nullmodel) and summary(model11)
+
+Model11 unexplained level 1 variation (sigma):  911.0484
+Null model unexplained level 1 variation: 17985.5
+(17985.5 - 911.0484)/17985.5 = .95
+→ 95% of unexplained variation at level 1 has now been explained
+
+Model11 unexplained level 2 variation (tau0/intercept var): 12.2167
+Null model unexplained level 2 variation: 292.9
+(292.9 - 12.2167)/292.9 = .96
+→ 96% of unexplained variation at level 2 has now been explained
+
+
 ```{r}
 #| label: residual plots
 plot(fitted(model11), resid(model11))
+plot(cooks.distance(model11)) # plots cooks distances, looks like we have a few potentially influential observations
 ```
-
 
 
 ## Discussion {#discussion}
