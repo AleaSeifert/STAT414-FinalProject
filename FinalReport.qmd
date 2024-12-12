@@ -32,97 +32,8 @@ execute:
 bibliography: references.bib
 ---
 
-```{r}
-#| label: setup
-library(tidyverse)
-library(ggtext)
-```
 
-```{r}
-#| label: data-cleaning
-# Data Cleaning
-
-
-```
-
-```{r, results='hide'}
-#| label: data-analysis
-#| 
- 
-```
-
-## Introduction {#intro}
-
-A few paragraphs that contain background information, motivation for your\
-research, and a statement of your research goals. Be sure to incorporate any supporting\
-references into the text. The purpose of the background is to place your work in the greater context of the literature in the area you are investigating. Then you should explicitly identify a hypothesis that you will investigate with your analysis. Don’t assume the reader remembers any of your earlier project reports.
-
-We chose this project because baseball is not only fun to watch, but has various opportunities to explore multilevel data. While being from major baseball We decided to analyze how the distance of a hit can be impacted by other factors in a game. We think that the relative hit location of the ball in the batting box and how the ball is thrown (angle and speed) will impact the hit distance. Since there is so much variability between different players' hits, we will include batter in the model. We have also included pitch type as we might need to control for this variable when analyzing hit distance. We want to see what precedes a a far distance hit.
-
-## Data and Methods![](STAT%20414%20Presentation.png)
-
-### Data Description
-
--   Briefly describe your data, where your data came from (source), definitions of important variables, and how the data were collected. You should include a variables table and/or diagram representing your study.
-
-    \*The data comes from Baseball Savant which records various aspects of plate appearances in MLB games. The data recorded comes from 4/2/2024 to 6/30/2024. This documentation was available at **[Baseball Savant](https://baseballsavant.mlb.com/csv-docs)** and can be downloaded at **[Share Point](https://yaleedu-my.sharepoint.com/personal/brian_macdonald_yale_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fbrian%5Fmacdonald%5Fyale%5Fedu%2FDocuments%2Fservice%2FCSAS%2F2025%2D04%2D11%20%2D%20CSAS%20at%20Yale%2Fdata%2Echallenge%2Fdata&ga=1).** The data was collected from a Statcase system which includes various cameras that are dedicated to tracking pitches, hits, and players. In the dataset, there are over 90 variables about all aspects of an mlb game, but we will only be looking at a few variables of interest.
-
--   Indicate any modifications made to the data, recoding, or decisions about missing data
-
-### Statistical Analysis
-
--   Briefly describe the methods you used (e.g., multilevel regression) in your analysis
-
--   Do not report results in this section!
-
-## Results {#results}
-
-```{r}
-#| label: tbl
-#| tbl-cap: ""
-#| tbl-pos: "H"
-
-
-```
-
-@fig
-
-```{r}
-#| label: fig
-#| fig-cap: "The"
-#| fig-align: center
-#| fig-pos: "H"
-
-
-  
-```
-
-@fig-cl (X2 = 14.991; df = 1; p-value \< 0.0001).
-
--   Summarize the results of your exploratory data analysis (e.g., include a matrix plot?). Which Level 1 and Level 2 variables appeared to be most promising before you built your final model
-
--   Summarize the results of your initial anova exploring the significance of the Level 2 grouping variable.
-
--   Summarize, including (with a useful picture), your null model and what you learn, including interpreting the ICC value in context.
-
--   Brief discussion of how you arrived at your final model. Interpret all of the estimated parameters in your final model in context. Include at least one confidence interval or interval of random slopes and interpret in context. (But there shouldn’t really be much “commentary” in this section.) How much of the unexplained Level 1 and/or Level 2\
-    variation in the null model is explained by your final model?
-
--   Integrate the most relevant figures to help interpret the results with your discussion. This includes graphs illustrating fixed effects, random effects, and interactions.
-
--   These tables and figures should be well-labeled, numbered (e.g., Figure 1), and\
-    have a good, descriptive caption.
-
--   Especially effective graphs compare your data to the model and discuss how the\
-    model does and does not capture important features of the data. At least\
-    consider showing the “effects plots” in addition to the raw data graphs.
-
--   Each report should have a minimum of two plots (could be several more, just\
-    keep them well-sized and well-integrated into the discussion).
-
--   Diagnostic analysis: Discussion and inclusion of residual plots (with commentary) for your final model
-
-```{r}
+```{r loading in data}
 #| label: load in data & libraries
 set.seed(7000)
 
@@ -140,11 +51,149 @@ library(effects)
 load("df_baseball_clean.RData")
 ```
 
+## Introduction {#intro}
+
+A few paragraphs that contain background information, motivation for your\
+research, and a statement of your research goals. Be sure to incorporate any supporting\
+references into the text. The purpose of the background is to place your work in the greater context of the literature in the area you are investigating. Then you should explicitly identify a hypothesis that you will investigate with your analysis. Don’t assume the reader remembers any of your earlier project reports.
+
+We chose this project because baseball is not only fun to watch, but has various opportunities to explore multilevel data. While being from major baseball We decided to analyze how the distance of a hit can be impacted by other factors in a game. We think that the relative hit location of the ball in the batting box and how the ball is thrown (angle and speed) will impact the hit distance. Since there is so much variability between different players' hits, we will include batter in the model. We have also included pitch type as we might need to control for this variable when analyzing hit distance. We want to see what precedes a a far distance hit.
+
+## Data and Methods![](STAT%20414%20Presentation.png)
+
+### Data Description
+
+-   Briefly describe your data, where your data came from (source), definitions of important variables, and how the data were collected. You should include a variables table and/or diagram representing your study.
+
+    \*The data comes from Baseball Savant which records various aspects of plate appearances in MLB games. The data recorded comes from 4/2/2024 to 6/30/2024. This documentation was available at [**Baseball Savant**](https://baseballsavant.mlb.com/csv-docs) and can be downloaded at [**Share Point**](https://yaleedu-my.sharepoint.com/personal/brian_macdonald_yale_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fbrian%5Fmacdonald%5Fyale%5Fedu%2FDocuments%2Fservice%2FCSAS%2F2025%2D04%2D11%20%2D%20CSAS%20at%20Yale%2Fdata%2Echallenge%2Fdata&ga=1)**.** The data was collected from a Statcase system which includes various cameras that are dedicated to tracking pitches, hits, and players. In the dataset, there are over 90 variables about all aspects of an mlb game, but we will only be looking at a few variables of interest.
+
+-   Indicate any modifications made to the data, recoding, or decisions about missing data
+
 ```{r}
+#| label: Taking a Random Sample 
 set.seed(7000)
 baseball_sample <- df_baseball_clean[sample(nrow(df_baseball_clean), 1000), ] |> arrange(desc(batter))
 head(baseball_sample)
 ```
+
+```{r}
+#| label: PitchType Variable Coding 
+final_data <- baseball_sample |>
+  mutate(is_fastball = as.integer(pitch_type %in% c("SI", "FF", "CU", "FA"))) |>
+  mutate(is_fastball = factor(is_fastball))
+```
+
+ -GMC
+ -taking a random sample
+ -fastball coding
+
+### Statistical Analysis
+
+-   Briefly describe the methods you used (e.g., multilevel regression) in your analysis
+
+-   Do not report results in this section!
+
+## Results
+
+-   Summarize the results of your exploratory data analysis (e.g., include a matrix plot?). Which Level 1 and Level 2 variables appeared to be most promising before you built your final model
+
+```{r}
+#| label: Matrix Plot for quantitative variables
+num_vars <- final_data |>
+  mutate(log_la = log(launch_angle_gmc),
+         sqrt_ls = sqrt(launch_angle_gmc),
+         launch_angle_sqd = launch_angle_gmc^2) |>
+  select(hit_distance_sc, launch_angle_gmc, launch_speed_gmc, launch_angle_sqd)
+
+ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Launch Angle", "Launch Speed", "Launch Angle^2"))
+```
+
+
+```{r}
+#| label: Categorical Analysis
+```
+
+
+-   Summarize the results of your initial anova exploring the significance of the Level 2 grouping variable.
+
+
+```{r}
+
+```
+
+
+-   Summarize, including (with a useful picture), your null model and what you learn, including interpreting the ICC value in context.
+
+```{r}
+#| label: Graph of variability between random 10 batters (number of hits)
+#| fig-cap: "A random sample of 10 Batters in the dataset"
+#| fig-align: center
+#| fig-pos: "H"
+set.seed(7000)
+
+top_batters <- final_data |>
+  distinct(batter) |>  
+  slice_sample(n = 10)  
+
+filtered_data <- final_data |>
+  filter(batter %in% top_batters$batter)  
+
+ggplot(filtered_data, aes(x = batter, y = hit_distance_sc)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  labs(title = "Distance Hit by Batter",
+       x = "Batter ID",
+       y = "Distance (ft)") +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+-   Brief discussion of how you arrived at your final model. Interpret all of the estimated parameters in your final model in context. Include at least one confidence interval or interval of random slopes and interpret in context. (But there shouldn’t really be much “commentary” in this section.) How much of the unexplained Level 1 and/or Level 2 variation in the null model is explained by your final model?
+
+# Fixed Effects
+
+
+```{r}
+#| label: Interaction effect graph
+final_data |>
+  ggplot(aes(x = stand, y=hit_distance_sc)) +
+  geom_boxplot() +
+  facet_grid(~is_fastball) +
+  theme_bw() + 
+  labs(title ="Interaction Between Dominant Hand and Fastball", x = "Dominant Hand", y = "Hit Distance")
+```
+
+#Random Effects
+
+```{r}
+model6 <- lmer(hit_distance_sc ~ is_fastball + launch_angle_gmc + launch_speed_gmc + stand + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+summary(model6)
+
+ggplot(final_data, aes(x = launch_angle_gmc, y = hit_distance_sc)) +
+  geom_smooth(aes(group = batter),
+          method = "lm",
+          se     = FALSE,      # do NOT want the SE bands
+          linewidth   = 0.3) +   theme_bw()
+
+fits1 = fitted.values(model6, level =1)
+```
+
+
+
+-   Integrate the most relevant figures to help interpret the results with your discussion. This includes graphs illustrating fixed effects, random effects, and interactions.
+
+-   These tables and figures should be well-labeled, numbered (e.g., Figure 1), and\
+    have a good, descriptive caption.
+
+-   Especially effective graphs compare your data to the model and discuss how the\
+    model does and does not capture important features of the data. At least\
+    consider showing the “effects plots” in addition to the raw data graphs.
+
+-   Each report should have a minimum of two plots (could be several more, just\
+    keep them well-sized and well-integrated into the discussion).
+
+-   Diagnostic analysis: Discussion and inclusion of residual plots (with commentary) for your final model
+
+
 
 Include the following modeling steps. This may not find the best model, but will be an opportunity for you to build a multilevel model in a coherent fashion. You should be using your cleaned data set with quantitative variables grand-mean centered.
 
