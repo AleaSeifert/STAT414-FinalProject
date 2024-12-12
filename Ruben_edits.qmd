@@ -32,7 +32,9 @@ df_baseball_clean <- df_baseball |>
          zone = factor(zone),
          p_throws = factor(p_throws)) |>
   select(type, hit_distance_sc, pitch_type, dist_from_cen, launch_angle, launch_speed, game_type, batter, stand, plate_x, plate_z, pfx_x, pfx_z, release_speed, release_pos_x, release_pos_y, release_pos_z, zone, release_spin_rate, p_throws, balls, strikes, effective_speed, release_extension) |>
-  filter(type == "X") |>
+  filter(type == "X",
+         hit_distance_sc > 0,
+         launch_angle > 0) |>
   drop_na() |>
   mutate(dist_from_cen_gmc = dist_from_cen - mean(dist_from_cen),
          hit_distance_gmc = hit_distance_sc - mean(hit_distance_sc),
@@ -191,7 +193,7 @@ qplot(final_data$launch_angle_gmc, fits1, group = factor(final_data$batter), geo
   theme_bw() +
   geom_abline(intercept=fixef(model6)[1], slope = fixef(model6)[2], color="green") 
 
-
+ranef(model11)
 ```
 
 The least amount of batter-to-batter variation in estimated launch angle slopes occurs at about -20 degrees.
@@ -242,7 +244,7 @@ anova(full_model, model8)
 model10 <- lmer(hit_distance_sc ~ launch_angle_gmc*launch_speed_gmc + stand + is_fastball + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
 anova(full_model, model10)
 
-model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+model11 <- lmer(hit_distance_sc ~ I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
 anova(nullmodel, model11)
 
 performance(model10)
@@ -250,6 +252,8 @@ summary(model10)
 performance(model8)
 performance(model11)
 
+model12 <-  lmer(hit_distance_sc ~ I(log(launch_angle_gmc+102))*launch_speed_gmc + stand + is_fastball  + (1 + I(log(launch_angle_gmc+102)) | batter), data=final_data, REML = TRUE)
+anova(nullmodel, model11)
 
 plot(allEffects(model8), main = "Stand Effects")
 
@@ -270,7 +274,7 @@ final_data |>
 
 ```{r}
 final_data |>
-  ggplot(aes(x = launch_angle_gmc, y = hit_distance_sc)) +
+  ggplot(aes(x = launch_angle, y = hit_distance_sc)) +
   geom_point() + geom_smooth()
 
 final_data |> mutate(launch_angle_sqd = launch_angle_gmc^2) |>
@@ -283,17 +287,20 @@ final_data |> mutate(launch_angle_sqrt = sqrt(launch_angle_gmc + 102)) |>
   geom_point() + geom_smooth()
                      
 
-final_data |> mutate(launch_angle_ln = log(launch_angle_gmc + 102)) |>
+final_data |> mutate(launch_angle_ln = log(launch_angle_gmc)) |>
   ggplot(aes(x = launch_angle_ln, y = hit_distance_sc)) +
   geom_point() + geom_smooth()
 
 final_data |> mutate(launch_angle_abs = abs(launch_angle_gmc)) |>
   ggplot(aes(x = launch_angle_abs, y = hit_distance_sc)) +
   geom_point() + geom_smooth()
+
+plot(model11)
+plot(model12)
 ```
 
 ```{r}
-model12 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + plate_x_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
+"model12 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + plate_x_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
 
 model13 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + plate_z_gmc + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
 
@@ -337,9 +344,12 @@ anova(model11, model22)
 anova(model11, model23)
 anova(model11, model24)
 anova(model11, model25)
-anova(model11, model26)
+anova(model11, model26)"""
 # plate_x, plate_z, pfx_x, pfx_z, release_speed, release_pos_x, release_pos_y, release_pos_z, zone, release_spin_rate, p_throws, balls, strikes, effective_speed, release_extension
 ```
 
 
 Keep in mind: Doing what I tell you to do is ~ B work. Doing more or less will move your grade up or down. Possible Extras: Enhanced graphs; More than 2 levels; Compare model in step 3 to a random effects ANCOVA model (using OLS); Testing additional random slopes; Cross validation (or at least consider possible multiple comparison issues); Including and interpreting confidence intervals
+
+$$ \widehat{\text{hit distance}}_{ij} = \beta_{0i} + \beta_{1i}(\text{launch angle}_{ij}) + \beta_{2i}(\text{launch angle}^2_{ij}) + \beta_{3}(\text{launch speed}_{ij}) + \\
+\beta_{4}(\text{stand}_{ij}) + \beta_{5}(\text{fastball}_{ij}) + \beta_{6}(\text{launch angle*launch speed})_{ij} + \epsilon_{ij}$$
