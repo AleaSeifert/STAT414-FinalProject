@@ -50,11 +50,12 @@ df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/st
 
 ## Introduction {#intro}
 
-A few paragraphs that contain background information, motivation for your\
-research, and a statement of your research goals. Be sure to incorporate any supporting\
-references into the text. The purpose of the background is to place your work in the greater context of the literature in the area you are investigating. Then you should explicitly identify a hypothesis that you will investigate with your analysis. Don’t assume the reader remembers any of your earlier project reports.
+Baseball is a captivating sport that is a big part of American culture. Besides its ability to keep many entertained, baseball is also rich in data with many opportunities to conduct statistical analyses. Each play contains information that can be interpreted and used within a  multilevel data modeling structure. Our motivation for choosing this data set was our interest in the sport, as well as the analytical opportunities and our curiosity in uncovering unique trends that influence the trajectory of the game.
 
-We chose this project because baseball is not only fun to watch, but has various opportunities to explore multilevel data. While being from major baseball We decided to analyze how the distance of a hit can be impacted by other factors in a game. We think that the relative hit location of the ball in the batting box and how the ball is thrown (angle and speed) will impact the hit distance. Since there is so much variability between different players' hits, we will include batter in the model. We have also included pitch type as we might need to control for this variable when analyzing hit distance. We want to see what precedes a a far distance hit.
+One factor of baseball games we found intriguing was variability in hit distance. We were interested in exploring this further as well as the potential variables that influences a batter's hit distance. We have seen prior research focusing on factors like bat speed and bat velocity, but have seen fewer studies examining the impact of multilevel facotrs. To explore baseball games in a multilevel manner, we examined the batter's dominant arm as our level one variable and the specific attributes of a pitch such as angle, speed, and type as our level 2 variables. We also accounted for player to player variability by including batter as a random effect in our model. We hypothesized that individual differences in skill can yield significantly different outcomes.
+
+Ultimately, our goal was to determine whether these factors, random effects, and interactions attribute to the outcome of a homerun, or a ball that is hit a far distance. We hypothesize that pitch angle and speed will significantly impact how far a ball travels. By examining this we hope to contribute to the field of baseball analytics and gain valuable insights to inform coaching and player development. 
+
 
 ## Data and Methods
 
