@@ -46,9 +46,7 @@ library(ICC)
 library(GGally)
 library(effects)
 
-#df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
-
-load("df_baseball_clean.RData")
+df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
 ```
 
 ## Introduction {#intro}
@@ -118,6 +116,7 @@ final_data <- baseball_sample |>
  -GMC
  -taking a random sample
  -fastball coding
+ -stand?
 
 ### Statistical Analysis
 
@@ -229,7 +228,7 @@ final_data |>
 ```
 
 ```{r}
-
+# significance
 ```
 
 
@@ -249,7 +248,7 @@ ggplot(final_data, aes(x = launch_angle_gmc, y = hit_distance_sc)) +
 fits1 = fitted.values(model6, level =1)
 ```
 
--including random slopes interval
+-including random slopes interval and significance
 
 
 #### Final Model
@@ -257,11 +256,45 @@ fits1 = fitted.values(model6, level =1)
 ```{r}
 #| Final Model
 model11 <- lmer(hit_distance_sc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + stand + is_fastball  + (1 + launch_angle_gmc + I(launch_angle_gmc^2) | batter), data=final_data, REML = TRUE)
-anova(nullmodel, model11)
+
+summary(model11)
+performance(model11)
+
+performance(model11)|> 
+  kableExtra::kbl(
+                  col.names = c("AIC", 
+                                "BIC",
+                                "R-squared conditional",
+                                "",
+                                "",
+                                "",
+                                "",
+                                ""),
+                  align = c(),
+                  booktabs = TRUE
+                  )
 ```
 
 
-**Interpretation of all the variables**
+**Interpretation of all the variables **
+
+1.fixed intercept:
+2.
+3.
+4.
+5.
+6.
+7.
+8.
+9.
+10.
+11.
+12.
+13.
+14.
+15.
+16.
+
 
 **How much of the unexplained Level 1 and/or Level 2 variation in the null model is explained by your final model?**
 
