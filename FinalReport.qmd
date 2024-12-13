@@ -12,10 +12,8 @@ author:
 affiliations:
     - id: 1
       name: Department of Statistics, Cal Poly - SLO
-abstract: "hqwvdfiqef"
 format: 
   pdf:
-    number-sections: true
     template-partials:
       - title.tex
     include-in-header:
@@ -29,7 +27,6 @@ execute:
   warning: false
   message: false
   echo: false
-bibliography: references.bib
 ---
 
 ```{r loading in data}
@@ -61,11 +58,9 @@ Ultimately, our goal was to determine whether these factors, random effects, and
 
 ## Data and Methods
 
-### Data Description
-
 The data comes from Baseball Savant which records various aspects of plate appearances in MLB games. The data recorded games over the 2024 regular season Major League Baseball (MLB), from the beginning of April through June. This documentation was available at [**Baseball Savant**](https://baseballsavant.mlb.com/csv-docs) and can be downloaded at [**Share Point**](https://yaleedu-my.sharepoint.com/personal/brian_macdonald_yale_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fbrian%5Fmacdonald%5Fyale%5Fedu%2FDocuments%2Fservice%2FCSAS%2F2025%2D04%2D11%20%2D%20CSAS%20at%20Yale%2Fdata%2Echallenge%2Fdata&ga=1)**.** The data was collected from a Statcast system which includes various cameras that are dedicated to tracking quantitative data from plate appearances with respect to both the pitcher and the batter in addition to data on the game states. In the dataset, there are over 90 variables about all aspects of an MLB game, but through our analysis with our goal of using variables that are directly observable from a batter’s role, we reduced our model to include the launch angle of the ball off the swing, the launch speed of the ball off the swing, the batter’s preferred stance side, and whether a pitch was a type fastball or not. These variables are displayed in Figure 1. 
 
-![Figure 1. This figure illustrates the various variables of interest and how they are observed on the playing field. The differing colors depict what level the variables are measured at.](STAT%20414%20Presentation.png){fig-align="center" width="650"}
+![This figure illustrates the various variables of interest and how they are observed on the playing field. The differing colors depict what level the variables are measured at.](STAT%20414%20Presentation.png){fig-align="center" width="650"}
 
 Initially, the data set contained 346,250 observations. However, we filtered the data to include only observations of balls hit into play, removing instances where the hit was categorized as a strike or foul. Additionally, we excluded hits with a recorded distance of 0 feet since this indicates that the ball did not travel any meaningful distance. Hits with launch angles less than 0 were also removed, as these represent balls hit directly into the ground, which would not result in meaningful travel distance. Including these observations produced non-linearity into the data, which could negatively impact the ability to meaningfully interpret the model.
 
@@ -83,7 +78,7 @@ table <- data.frame(
 )
 
 kable(table, col.names = c("Name", "Variable Role", "Type", "Values (units)"), 
-      caption = "Table 1. Variable Descriptions within the final dataset. Includes information on how the variable is measures, the data type, and the role within the multilevel structure.") |>
+      caption = "Variable Descriptions within the final dataset. Includes information on how the variable is measures, the data type, and the role within the multilevel structure.") |>
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
@@ -135,11 +130,10 @@ performance(nullmodel)
 model11 <- lmer(hit_distance_gmc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + standR + is_fastball + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
 ```
 
-### Statistical Analysis
 
 In our analysis, we fitted a total of 11 models, starting with a null model in which batters were treated as random intercepts at level 2. Initially, this approach assumed that variation in hit distance could be explained by differences between batters. As a result, we proceeded with a multilevel model, which accounts for the hierarchical structure of the data, with hits nested within each batter which can be seen in figure 2.
 
-![Figure 2. This image depicts the multilevel structure of the data with hits nested within each batter](levels.png){fig-align="center"}
+![This image depicts the multilevel structure of the data with hits nested within each batter](levels.png){fig-align="center"}
 
 
 ## Results
@@ -148,7 +142,7 @@ In our initial analysis, we viewed various terms and found that launch angle and
 
 ```{r}
 #| label: Matrix Plot for quantitative variables
-#| fig-cap: "Figure 3. Matrix plot of the quantitative features in the data including launch angle and launch speed"
+#| fig-cap: "Matrix plot of the quantitative features in the data including launch angle and launch speed"
 #| fig-align: center
 #| fig-pos: "H"
 num_vars <- final_data |>
@@ -163,7 +157,7 @@ We also viewed relationships between categorical variables including whether the
 
 ```{r}
 #| label: Categorical Analysis
-#| fig-cap: "Figure 4. Effect plots of batter standing position and if the pitch was a fastball or not"
+#| fig-cap: "Effect plots of batter standing position and if the pitch was a fastball or not"
 #| fig-align: center
 #| fig-pos: "H"
 
@@ -184,7 +178,7 @@ Figure 5 depicts a random sample of the thousands of batters in the dataset to o
 
 ```{r}
 #| label: Graph of variability between random 10 batters (number of hits)
-#| fig-cap: "Figure 5. A random sample of 10 Batters in the dataset to observe difference in distance of hit variability"
+#| fig-cap: "A random sample of 10 Batters in the dataset to observe difference in distance of hit variability"
 #| fig-align: center
 #| fig-pos: "H"
 set.seed(7000)
@@ -209,11 +203,11 @@ We then created a null model where batter is a random intercept.
 
 
 
-\$ \tau\_0\^2: \$ The batter to batter variance in average hit distance is 102.8.
+$$ \tau_0^2:$$ The batter to batter variance in average hit distance is 102.8.
 
-\$ \sigma\^2: \$ The variance in average hit distance for each batter is 10929.5.
+$$ \sigma^2:$$ The variance in average hit distance for each batter is 10929.5.
 
-\$ \beta\_0: \$ The average hit distance across all batters is 234.5283.
+$$ \beta_0:$$ The average hit distance across all batters is 234.5283.
 
 $$ ICC: \frac{102.8}{102.8 + 10929.5} = 0.00932$$ The correlation between two hits by the same batter is .009. Only 0.00932% of the variation in hit distance is explained by within batter variation rather than between batters. This is not substantial. The deviance is 104.544 feet. The null model also has an AIC and BIC value of 505300. This ICC values appears to make sense with figure 5, as there is no substantial variability between batters. We will still proceed the analysis process with batters as random slopes. 
 
@@ -248,28 +242,34 @@ plot(effect(term="launch_angle_gmc*launch_speed_gmc", mod=model11), xlab="Launch
 #### Random Effects
 
 
-```{r}
+```{r, include = FALSE}
 confint(model11)
 ```
 
 
 Model11 unexplained level 1 variation ($\sigma^2$):  911.0484
+
 Null model unexplained level 1 variation: 17985.5
+
 (17985.5 - 911.0484)/17985.5 = .95
-→ 95% of unexplained variation at level 1 has now been explained
+
+95% of unexplained variation at level 1 has now been explained.
 
 Model11 unexplained level 2 variation ($\tau^2_0$/intercept variation): 12.2167
+
 Null model unexplained level 2 variation: 292.9
+
 (292.9 - 12.2167)/292.9 = .96
-→ 96% of unexplained variation at level 2 has now been explained
+
+→ 96% of unexplained variation at level 2 has now been explained.
 
 
 ```{r}
 #| label: Effects plot (intercepts vs slopes)
 
-ranef(model11)$batter
-ranef(model11)$batter[,1]
-ranef(model11)$batter[,2]
+#ranef(model11)$batter
+#ranef(model11)$batter[,1]
+#ranef(model11)$batter[,2]
 plot(ranef(model11)$batter[,2]~ranef(model11)$batter[,1], ylab = "Slope effects for each batter", xlab="Intercept effects for each batter", main = "Random Effects of Batters: Intercept vs. Slope")
 abline(lm(ranef(model11)$batter[,2]~ ranef(model11)$batter[,1]))
 
@@ -283,8 +283,12 @@ abline(lm(slopes~intercepts))
 
 #### Final Model
 
+Our final model was given by
 
-```{r}
+$$ \widehat{\text{hit distance}}_{ij} = \beta_{0i} + \beta_{1i}(\text{launch angle}_{ij}) + \beta_{2i}(\text{launch angle}^2_{ij}) + \beta_{3}(\text{launch speed}_{ij}) + \\
+\beta_{4}(\text{stand}_{ij}) + \beta_{5}(\text{fastball}_{ij}) + \beta_{6}(\text{launch angle*launch speed})_{ij} + \epsilon_{ij}$$
+
+```{r, include=FALSE}
 summary(model11)
 performance(model11)
 confint(model11)
@@ -292,7 +296,7 @@ confint(model11)
 
 ```{r}
 #| label: Final Model Output
-#| fig-cap: "Figure 6. Strength of model fit metrics"
+#| fig-cap: "Strength of model fit metrics"
 table <- performance(model11)|> 
   kableExtra::kbl(
                   col.names = c("AIC", 
@@ -349,10 +353,12 @@ plot(fitted(model11), resid(model11))
 plot(cooks.distance(model11)) 
 qqnorm(residuals(model11))
 qqline(residuals(model11), col = "red", lwd = 2)
-which(cooks.distance(model11) > 1)
+#which(cooks.distance(model11) > 1)
 final_data[c(4229, 20918, 31564, 38538, 41055), ]
 # plots cooks distances, looks like we have a few potentially influential observations
 ```
+
+These observations we found to be outliers and potentially influential.
 
 To assess our final model, model 11, we made three graphs. The residual vs fitted plot tested the model's equal variance and linearity condition, the QQ plot tested the model's normality condition, and the Cook's distance plot tested the model's influential observations. 
 
