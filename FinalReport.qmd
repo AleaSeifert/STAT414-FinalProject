@@ -16,7 +16,7 @@ abstract: "hqwvdfiqef"
 format: 
   pdf:
     number-sections: true
-    template-partials: ssssss
+    template-partials:
       - title.tex
     include-in-header:
       text: |
@@ -217,9 +217,6 @@ We then created a null model where batter is a random intercept.
 
 $$ ICC: \frac{102.8}{102.8 + 10929.5} = 0.00932$$ The correlation between two hits by the same batter is .009. Only 0.00932% of the variation in hit distance is explained by within batter variation rather than between batters. This is not substantial. The deviance is 104.544 feet. The null model also has an AIC and BIC value of 505300. This ICC values appears to make sense with figure 5, as there is no substantial variability between batters. We will still proceed the analysis process with batters as random slopes. 
 
-
-###########
-
 For model selection, we chose the model that had the highest conditional R^2 value while still being easily interpretable and not overfit to the data, as the goal is to determine what the strongest predictors of large hit distances is and to be able to generalize it across players in the MLB.
 
 We are 95% confident that variation in the random launch angle slopes is between 9.418 and 15.366.
@@ -343,7 +340,6 @@ table
 
 14. (-0.63 \* 0.01595 \* 1.02778 = -0.01032765) Within batters where the launch angle squared has a more positive effect on hit distance, the effect of having a higher launch on hit distance tends to be more negative.
 
-##########
 
 **Model Assumptions:**
 
