@@ -67,9 +67,9 @@ The data comes from Baseball Savant which records various aspects of plate appea
 
 ![Figure 1. This figure illustrates the various variables of interest and how they are observed on the playing field. The differing colors depict what level the variables are measured at.](STAT%20414%20Presentation.png){fig-align="center" width="650"}
 
-Initially, the data set contained 346,250 observations. However, we filtered the data to include only observations of balls hit into play, removing instances where the hit was categorized as a strike or foul. Additionally, we excluded hits with a recorded distance of 0 feet since this indicates that the ball did not travel any meaningful distance. Hits with launch angles less than 0 were also removed, as these represent balls hit directly into the ground, which would not result in meaningful travel distance. Including these observations produced non-linearity into the data, which could negatively impact the ability to meanigfully interpret the model.
+Initially, the data set contained 346,250 observations. However, we filtered the data to include only observations of balls hit into play, removing instances where the hit was categorized as a strike or foul. Additionally, we excluded hits with a recorded distance of 0 feet since this indicates that the ball did not travel any meaningful distance. Hits with launch angles less than 0 were also removed, as these represent balls hit directly into the ground, which would not result in meaningful travel distance. Including these observations produced non-linearity into the data, which could negatively impact the ability to meaningfully interpret the model.
 
-We also grand-mean centered all quantitative variables were in the final model. While the original data set included a variable for pitch type, analysis revealed that only fastball-related categories (four-seam, two-seam, and cutter) were statistically significant after dummy coding. Consequently, we recoded these categories into a single indicator variable, is_fastball, where a value of 1 indicates a fastball and 0 indicates all other pitch types. Additionally, we recoded batter stand side to indicator coding. Our final data set includes 41,610 hit observations over the variables of interest seen in table 1.
+We also grand-mean centered all quantitative variables were in the final model. While the original data set included a variable for pitch type, analysis revealed that only fastball-related categories (four-seam, two-seam, and cutter) were statistically significant after dummy coding. Consequently, we encoded these categories into a single indicator variable, is_fastball, where a value of 1 indicates a fastball and 0 indicates all other pitch types. Additionally, we encoded batter stance side to indicator coding. Our final data set includes 41,610 hit observations over the variables of interest seen in table 1.
 
 ```{r}
 table <- data.frame(
@@ -87,7 +87,7 @@ kable(table, col.names = c("Name", "Variable Role", "Type", "Values (units)"),
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
-```{r include = FALSE}
+```{r, include = FALSE}
 #| label: Grand Mean Centering and Recoding
 final_data <- df_baseball |>
   mutate(dist_from_cen = sqrt((plate_x^2) + (plate_z^2)),
@@ -213,21 +213,10 @@ $$ ICC: \frac{102.8}{102.8 + 10929.5} = 0.00932$$ The correlation between two hi
 
 ###########
 
--   Brief discussion of how you arrived at your final model. Interpret all of the estimated parameters in your final model in context. Include at least one confidence interval or interval of random slopes and interpret in context. (But there shouldn’t really be much “commentary” in this section.) How much of the unexplained Level 1 and/or Level 2 variation in the null model is explained by your final model?
+For model selection, we chose the model that had the highest conditional R^2 value while still being easily interpretable and not overfit to the data, as the goal is to determine what the strongest predictors of large hit distances is and to be able to generalize it across players in the MLB.
 
--   Integrate the most relevant figures to help interpret the results with your discussion. This includes graphs illustrating fixed effects, random effects, and interactions.
+We are 95% confident that variation in the random launch angle slopes is between 9.418 and 15.366.
 
--   These tables and figures should be well-labeled, numbered (e.g., Figure 1), and\
-    have a good, descriptive caption.
-
--   Especially effective graphs compare your data to the model and discuss how the\
-    model does and does not capture important features of the data. At least\
-    consider showing the “effects plots” in addition to the raw data graphs.
-
--   Each report should have a minimum of two plots (could be several more, just\
-    keep them well-sized and well-integrated into the discussion).
-
--   Diagnostic analysis: Discussion and inclusion of residual plots (with commentary) for your final model
 
 #### Fixed Effects
 
@@ -281,7 +270,23 @@ plot1 + plot2
 ```
 
 ```{r}
-#| "Effects" plot (intercepts vs slopes)
+confint(model11)
+```
+
+
+Model11 unexplained level 1 variation ($\sigma^2$):  911.0484
+Null model unexplained level 1 variation: 17985.5
+(17985.5 - 911.0484)/17985.5 = .95
+→ 95% of unexplained variation at level 1 has now been explained
+
+Model11 unexplained level 2 variation ($\tau^2_0$/intercept variation): 12.2167
+Null model unexplained level 2 variation: 292.9
+(292.9 - 12.2167)/292.9 = .96
+→ 96% of unexplained variation at level 2 has now been explained
+
+
+```{r}
+#| label: Effects plot (intercepts vs slopes)
 
 ranef(model11)$batter
 ranef(model11)$batter[,1]
@@ -296,7 +301,6 @@ plot(slopes ~ intercepts, xlab = "Predicted Intercepts for Each Batter", ylab="P
 abline(lm(slopes~intercepts))
 ```
 
--including random slopes interval and significance
 
 #### Final Model
 
@@ -315,7 +319,7 @@ confint(model11)
 table <- performance(model11)|> 
   kableExtra::kbl(
                   col.names = c("AIC", 
-                                "AICc"
+                                "AICc",
                                 "BIC",
                                 "R-squared conditional",
                                 "R-squared marginal",
@@ -361,19 +365,6 @@ table
 
 ##########
 
-**How much of the unexplained Level 1 and/or Level 2 variation in the null model is explained by your final model?**
-
-did summary(nullmodel) and summary(model11)
-
-Model11 unexplained level 1 variation (sigma):  911.0484
-Null model unexplained level 1 variation: 17985.5
-(17985.5 - 911.0484)/17985.5 = .95
-→ 95% of unexplained variation at level 1 has now been explained
-
-Model11 unexplained level 2 variation (tau0/intercept var): 12.2167
-Null model unexplained level 2 variation: 292.9
-(292.9 - 12.2167)/292.9 = .96
-→ 96% of unexplained variation at level 2 has now been explained
 
 
 ```{r}
@@ -385,15 +376,10 @@ plot(cooks.distance(model11)) # plots cooks distances, looks like we have a few 
 
 ## Discussion {#discussion}
 
-Describe how the results help answer your research questions and what was most interesting from your analysis. In fact, the first paragraph of the Discussion is very important – in professional journals, it is often the first and sometimes the only paragraph that is read in a paper. After the first sentence highlights primary results, the remainder of the first paragraph might compare your results to others in the literature or include interesting secondary results.
+Using a multilevel linear regression model fit with considerations toward launch angle, launch speed, batter stance, pitcher throwing arm, and whether a pitch was  a fastball or not, where batters were considered random units sampled from a larger population of batters, we were able to explain 92% of variation in hit distances. Our analyses found that the strongest predictor of hit distance for MLB hitters is the launch speed of the ball from contact with the bat. This is followed closely by the vertical launch angle of the ball from contact with the bat, while the next strongest predictors, batter’s stance and whether the pitch type is a fastball or not, while statistically significant, were not practically significant. Using random intercepts for batters is a strong point in our analysis, as we are able to extrapolate the observed effects to a larger population of batters in the MLB, including present players and future batters who may not be in the league yet.
 
--   Discuss possible implications of the results in the context of the research question.
+Our scope of inference is limited to hits above a zero degree vertical launch angle, as we did no analysis on data below that, so the results do not extrapolate there. Further research into ball behavior when balls are launched toward the ground may need to be explored in a similar isolated study. 
 
--   Identify any limitations of your study. Discuss the potential impact of such limitations onthe conclusions. (e.g., potential confounding variables, generalizability - Don’t give generic statements of possible causation and generalizability, but thoughtfully discuss relevant issues – confounding variables, representativeness of the sample, etc.)
-
--   Identify strengths and weaknesses of your analysis.
-
--   Make suggestions for future research. Identify important next steps that a researcher could take to build on your work.
 
 {{< pagebreak >}}
 
