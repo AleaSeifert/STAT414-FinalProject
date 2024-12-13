@@ -131,14 +131,14 @@ model11 <- lmer(hit_distance_gmc ~ launch_angle_gmc + I(launch_angle_gmc^2)*laun
 ```
 
 
-In our analysis, we fitted a total of 11 models, starting with a null model in which batters were treated as random intercepts at level 2. Initially, this approach assumed that variation in hit distance could be explained by differences between batters. As a result, we proceeded with a multilevel model, which accounts for the hierarchical structure of the data, with hits nested within each batter which can be seen in figure 2.
+In our analysis, we fit a total of 11 models, starting with a null model in which batters were treated as random intercepts at level 2. Initially, this approach assumed that variation in hit distance could be explained by differences between batters. As a result, we proceeded with a multilevel model, which accounts for the hierarchical structure of the data, with hits nested within each batter which can be seen in figure 2.
 
 ![This image depicts the multilevel structure of the data with hits nested within each batter](levels.png){fig-align="center"}
 
 
 ## Results
 
-In our initial analysis, we viewed various terms and found that launch angle and launch speed appeared to have some relationship to hit distance. In figure 3 it appears that there is a weak to moderate negative relationship between launch angle and hit distance (corr = -0.307). The matrix plot also shows a moderate positive relationship between launch speed and hit distance (corr = 0.444). The matrix plot also showed a possible non linear relationship between hit distance and launch angle, so we decided to include a squared term in our later model.
+In our initial analysis, we viewed various terms and found that launch angle and launch speed appeared to have some relationship with hit distance. In figure 3 it appears that there is a weak to moderate negative relationship between launch angle and hit distance (corr = -0.307). The matrix plot also shows a moderate positive relationship between launch speed and hit distance (corr = 0.444). Additionally, the plot showed a possible non linear relationship between hit distance and launch angle, so we decided to include a squared term in our later model.
 
 ```{r}
 #| label: Matrix Plot for quantitative variables
@@ -153,7 +153,7 @@ num_vars <- final_data |>
 ggpairs(num_vars, title = "Matrix Plot Between Numeric Predictors, Response", columnLabels = c("Hit Distance", "Launch Angle", "Launch Speed"))
 ```
 
-We also viewed relationships between categorical variables including whether the pitch was a fastball or not and which side the batter is standing and hit distance. We see that the average hit distance is greater for fastball than nonfastballs. It also shows that the average distance hit is larger for a hit where the batter stands on the right side.
+We also viewed relationships between categorical variables including whether the pitch was a fastball or not and which side the batter is standing and hit distance. We see that the average hit distance is greater for fastball than non-fastballs. It also shows that the average distance hit is larger for a hit where the batter stands on the right side.
 
 ```{r}
 #| label: Categorical Analysis
@@ -209,7 +209,7 @@ $$ \sigma^2:$$ The variance in average hit distance for each batter is 10929.5.
 
 $$ \beta_0:$$ The average hit distance across all batters is 234.5283.
 
-$$ ICC: \frac{102.8}{102.8 + 10929.5} = 0.00932$$ The correlation between two hits by the same batter is .009. Only 0.00932% of the variation in hit distance is explained by within batter variation rather than between batters. This is not substantial. The deviance is 104.544 feet. The null model also has an AIC and BIC value of 505300. This ICC values appears to make sense with figure 5, as there is no substantial variability between batters. We will still proceed the analysis process with batters as random slopes. 
+$$ ICC: \frac{102.8}{102.8 + 10929.5} = 0.00932$$ The correlation between two hits by the same batter is .009. Only 0.00932% of the variation in hit distance is explained by between batter variation rather than within batters. This is not substantial. The deviance is 104.544 feet. The null model also has an AIC and BIC value of 505300. We will still proceed the analysis process with batters as random slopes. 
 
 For model selection, we chose the model that had the highest conditional R^2 value while still being easily interpretable and not overfit to the data, as the goal is to determine what the strongest predictors of large hit distances is and to be able to generalize it across players in the MLB.
 
@@ -367,7 +367,7 @@ After examining the QQ plot, we cocnluded that the normality condition is okay. 
 Next, we observed the residual vs fitted plot to assess the equal variance and linearity condition. The plot reveals a curved pattern, suggesting non-linearity. Due to this, we must proceed with caution as we cannot say that our linearity condition has been met. The funneling or heteroscedasticity, where the residuals get more spread out as the fitted values get larger indicate that there is unequal variance. Unfortunately, due to this we decided to proceed with caution. 
 
 Lastly, we observed the Cook's distance plot to test whether there are influential observations in the data. There are five points that appear to have Cook's distance value greater than one, indicating potentially influential points. The observations that correspond to these points are 
-4229, 20918, 31564, 38538, and 41055. These points have high leverage, large residuals, or both- making them infleuntial. 
+4229, 20918, 31564, 38538, and 41055. These points have high leverage, large residuals, or both- making them influential. 
 
 
 ## Discussion {#discussion}
@@ -414,13 +414,9 @@ ggplot(final_data, aes(x = launch_angle_gmc, y = hit_distance_sc)) +
 ```
 Annotation: This plot visualizes the relationship between launch angle and hit distance using scatter points and a fitted linear trend line. The trend line, added highlights the general direction of the relationship without showing confidence intervals.
 
--   Description of statistical modeling steps that were not included in the main body of your report. Possible entries here include:
+**Statistical Modeling**
 
-    -   Evaluation of assumptions.
-    -   Outlier analysis and how you decided to deal with any outliers along with rationale for your decision.
-    -   Describe hypotheses testing you performed during model building and how you decided on the explanatory variables you ultimately included in your final model.
-    -   Assessment of the final model.
-    -   If applicable: How you went from the model output in R to interpretations in your report(e.g. exponentiate coefficients, then take inverse)
-    -   Anticipate questions someone might have after reading your report, and make sure those questions can be answered with information in the appendix. -A citation for any reference article(s) you included in your proposal. Also include a link, if appropriate
+To figure out the best model we did some hypothesis testing along the way. All of our variables, aside from standR (the batter's stance), had a t-value that was larger than 2. This confirmed that all but one of our fixed explanatory variables explained significant variation in hit distance. This supports the inclusion of these variables in our final model. Due to standR's small t-value we decided to fit a model without stand to see if it was valuable to keep standR in our final model. We ran an Anova test comparing our final model, Model 11, to a model without standR. Although the likelihood ratio test indicates that adding standR to the model does not significantly improve the model fit (p=0.9146), we decided to retain it for several reasons. First, including standR does not worsen the model, as we saw by the identical AIC and BIC values between the two models. Second, standR is conceptually important as it captures potentially meaningful differences in performance between left- and right-handed batters, which we found important to use as a Level 2 variable. By retaining standR, the model remains robust and interpretable for contexts where stance might play a role in understanding hit distance.
+
 
 ## 
