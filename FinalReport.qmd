@@ -60,7 +60,7 @@ Ultimately, our goal was to determine whether these factors, random effects, and
 
 The data comes from Baseball Savant which records various aspects of plate appearances in MLB games. The data recorded games over the 2024 regular season Major League Baseball (MLB), from the beginning of April through June. This documentation was available at [**Baseball Savant**](https://baseballsavant.mlb.com/csv-docs) and can be downloaded at [**Share Point**](https://yaleedu-my.sharepoint.com/personal/brian_macdonald_yale_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fbrian%5Fmacdonald%5Fyale%5Fedu%2FDocuments%2Fservice%2FCSAS%2F2025%2D04%2D11%20%2D%20CSAS%20at%20Yale%2Fdata%2Echallenge%2Fdata&ga=1)**.** The data was collected from a Statcast system which includes various cameras that are dedicated to tracking quantitative data from plate appearances with respect to both the pitcher and the batter in addition to data on the game states. In the dataset, there are over 90 variables about all aspects of an MLB game, but through our analysis with our goal of using variables that are directly observable from a batter’s role, we reduced our model to include the launch angle of the ball off the swing, the launch speed of the ball off the swing, the batter’s preferred stance side, and whether a pitch was a type fastball or not. These variables are displayed in Figure 1. 
 
-![This figure illustrates the various variables of interest and how they are observed on the playing field. The differing colors depict what level the variables are measured at.](STAT%20414%20Presentation.png){fig-align="center" width="650"}
+![This figure illustrates the various variables of interest and how they are observed on the playing field. The differing colors depict what level the variables are measured at.](STAT%20414%20Presentation.png)
 
 Initially, the data set contained 346,250 observations. However, we filtered the data to include only observations of balls hit into play, removing instances where the hit was categorized as a strike or foul. Additionally, we excluded hits with a recorded distance of 0 feet since this indicates that the ball did not travel any meaningful distance. Hits with launch angles less than 0 were also removed, as these represent balls hit directly into the ground, which would not result in meaningful travel distance. Including these observations produced non-linearity into the data, which could negatively impact the ability to meaningfully interpret the model.
 
@@ -78,7 +78,8 @@ table <- data.frame(
 )
 
 kable(table, col.names = c("Name", "Variable Role", "Type", "Values (units)"), 
-      caption = "Variable Descriptions within the final dataset. Includes information on how the variable is measures, the data type, and the role within the multilevel structure.") |>
+      caption = "Variable Descriptions within the final dataset. Includes information on how the variable is measures, the data type, and the role within the multilevel structure.",
+      align = "c") |>
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
@@ -216,31 +217,23 @@ For model selection, we chose the model that had the highest conditional R^2 val
 We are 95% confident that variation in the random launch angle slopes is between 9.418 and 15.366.
 
 
-#### Fixed Effects
+#### Fixed Effects Interaction
 
-Within the fixed effects of the model we found
-
-```{r}
-#| label: Interaction effect graph
-final_data |>
-  ggplot(aes(x = stand, y=hit_distance_sc)) +
-  geom_boxplot() +
-  facet_grid(~is_fastball) +
-  theme_bw() + 
-  labs(title ="Interaction Between Dominant Hand and Fastball", x = "Dominant Hand", y = "Hit Distance")
-```
+Within the fixed effects we found that there was a significant interaction between squared launch angle and launch speed.
 
 ```{r}
-# significance
+#| fig-width: 8
+#| fig-height: 5
+#| fig-cap: "The launch angle and launch speed interaction over various values of launch speed"
+plot(effect(term="I(launch_angle_gmc^2):launch_speed_gmc", mod=model11), xlab="Launch Angle", ylab="Hit Distance (ft)", main="Squared Launch Angle and Launch Speed Interaction Effect")
 ```
 
-```{r}
-plot(effect(term="launch_angle_gmc*launch_speed_gmc", mod=model11), xlab="Launch Angle", ylab="Hit Distance (ft)", main="Launch Angle and Launch Speed Interaction Effect")
-#change**
-```
+
 
 #### Random Effects
 
+
+Additionally, we found a that including launch angle as a random slope significantly improved the model.
 
 ```{r, include = FALSE}
 confint(model11)
@@ -273,7 +266,6 @@ Null model unexplained level 2 variation: 292.9
 plot(ranef(model11)$batter[,2]~ranef(model11)$batter[,1], ylab = "Slope effects for each batter", xlab="Intercept effects for each batter", main = "Random Effects of Batters: Intercept vs. Slope")
 abline(lm(ranef(model11)$batter[,2]~ ranef(model11)$batter[,1]))
 
-
 slopes= fixef(model11)[[2]]+ranef(model11)$batter[,2]
 intercepts = fixef(model11)[[1]]+ranef(model11)$batter[,1]
 plot(slopes ~ intercepts, xlab = "Predicted Intercepts for Each Batter", ylab="Predicted Slopes for Each Batter", main= "Predicted Hitting Performance by Batter")
@@ -285,8 +277,14 @@ abline(lm(slopes~intercepts))
 
 Our final model was given by
 
-$$ \widehat{\text{hit distance}}_{ij} = \beta_{0i} + \beta_{1i}(\text{launch angle}_{ij}) + \beta_{2i}(\text{launch angle}^2_{ij}) + \beta_{3}(\text{launch speed}_{ij}) + \\
-\beta_{4}(\text{stand}_{ij}) + \beta_{5}(\text{fastball}_{ij}) + \beta_{6}(\text{launch angle*launch speed})_{ij} + \epsilon_{ij}$$
+\
+\begin{align}
+\widehat{\text{hit distance}}_{ij} &= \beta_{0i} + \beta_{1i}(\text{launch angle}_{ij}) + \beta_{2i}(\text{launch angle}^2_{ij}) \\
+&+ \beta_{3}(\text{launch speed}_{ij}) + \beta_{4}(\text{stand}_{ij}) \\
+&+ \beta_{5}(\text{fastball}_{ij}) + \beta_{6}(\text{launch angle} \cdot \text{launch speed})_{ij} \\
+&+ \epsilon_{ij}
+\end{align}
+\
 
 ```{r, include=FALSE}
 summary(model11)
@@ -296,7 +294,6 @@ confint(model11)
 
 ```{r}
 #| label: Final Model Output
-#| fig-cap: "Strength of model fit metrics"
 table <- performance(model11)|> 
   kableExtra::kbl(
                   col.names = c("AIC", 
@@ -307,12 +304,17 @@ table <- performance(model11)|>
                                 "ICC",
                                 "RMSE",
                                 "Sigma"),
-                  align = c(),
+                  caption = "Strength of model fit metrics",
                   digits = 3,
                   booktabs = TRUE
-                  )
+  ) |>
+  kableExtra::kable_styling(
+    position = "center", # Center the table
+    full_width = FALSE
+  )
 table
 ```
+
 
 **Interpretation of all the variables**
 
@@ -362,7 +364,7 @@ These observations we found to be outliers and potentially influential.
 
 To assess our final model, model 11, we made three graphs. The residual vs fitted plot tested the model's equal variance and linearity condition, the QQ plot tested the model's normality condition, and the Cook's distance plot tested the model's influential observations. 
 
-After examining the QQ plot, we cocnluded that the normality condition is okay. The majority of the residuals sit along the diagonal line, indicating that the bulk of the data is normal. However, deviations at the tails indicate that the residuals may not be perfectly distributed. This could be attributed to the large dataset we have or outliers. We will consider this assumption met, even though we may decide to still proceed with caution.
+After examining the QQ plot, we concluded that the normality condition is okay. The majority of the residuals sit along the diagonal line, indicating that the bulk of the data is normal. However, deviations at the tails indicate that the residuals may not be perfectly distributed. This could be attributed to the large dataset we have or outliers. We will consider this assumption met, even though we may decide to still proceed with caution.
 
 Next, we observed the residual vs fitted plot to assess the equal variance and linearity condition. The plot reveals a curved pattern, suggesting non-linearity. Due to this, we must proceed with caution as we cannot say that our linearity condition has been met. The funneling or heteroscedasticity, where the residuals get more spread out as the fitted values get larger indicate that there is unequal variance. Unfortunately, due to this we decided to proceed with caution. 
 
