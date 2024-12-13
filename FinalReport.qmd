@@ -48,7 +48,7 @@ library(patchwork)
 library(kableExtra)
 library(gridExtra)
 
-#df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
+df_baseball <- read_csv("https://www.dropbox.com/scl/fi/2bcvc8eabdinum2e3r9oj/statcast_pitch_swing_data_20240402_20240630.csv?rlkey=bl9kxe5o9yv017cmjssbgya3s&st=pnrx2dej&dl=1")
 ```
 
 ## Introduction {#intro}
@@ -120,6 +120,21 @@ final_data <- final_data |>
   mutate(standR = factor(standR))
 ```
 
+```{r include = FALSE}
+nullmodel <- lmer(hit_distance_sc ~ 1 + (1 | batter), data=final_data)
+summary(nullmodel)
+
+ICC::ICCbare(y=final_data$hit_distance_sc, x = final_data$batter)
+
+logLik(nullmodel)
+performance(nullmodel)
+```
+
+```{r include = FALSE}
+#| label: Final Model
+model11 <- lmer(hit_distance_gmc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + standR + is_fastball + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
+```
+
 ### Statistical Analysis
 
 In our analysis, we fitted a total of 11 models, starting with a null model in which batters were treated as random intercepts at level 2. Initially, this approach assumed that variation in hit distance could be explained by differences between batters. As a result, we proceeded with a multilevel model, which accounts for the hierarchical structure of the data, with hits nested within each batter which can be seen in figure 2.
@@ -155,7 +170,7 @@ We also viewed relationships between categorical variables including whether the
 plot_1 <- plot(effect(term="standR", mod=model11), xlab="Dominant Side", ylab="Hit Distance (ft)", main = "Dominant Side Effect")
 plot2 <- plot(effect(term="is_fastball", mod=model11), xlab="Is a Fastball", ylab="Hit Distance (ft)", main = "Fastball Effect")
 
-grid.arrange(plot1, plot2, ncol = 2)
+grid.arrange(plot_1, plot2, ncol = 2)
 ```
 
 The next step, was building the model. We first ran an anova to find the significance of the level 2 grouping variable batter. We found that batter is a statistically significant predictor hit distance (df numerator = 551, df denominator = 41058, F-statistic = 1.7012, p-value = <0.001).
@@ -192,15 +207,7 @@ ggplot(filtered_data, aes(x = batter, y = hit_distance_sc)) +
 
 We then created a null model where batter is a random intercept. 
 
-```{r include = False}
-nullmodel <- lmer(hit_distance_sc ~ 1 + (1 | batter), data=final_data)
-summary(nullmodel)
 
-ICC::ICCbare(y=final_data$hit_distance_sc, x = final_data$batter)
-
-logLik(nullmodel)
-performance(nullmodel)
-```
 
 \$ \tau\_0\^2: \$ The batter to batter variance in average hit distance is 102.8.
 
@@ -243,31 +250,6 @@ plot(effect(term="launch_angle_gmc*launch_speed_gmc", mod=model11), xlab="Launch
 
 #### Random Effects
 
-```{r}
-#| label: Random Slopes graph
-
-plot1 <- ggplot(final_data, aes(x = launch_angle_gmc, y = log_y)) +
-  geom_smooth(aes(group = batter),
-          method = "lm",
-          se     = FALSE,      # do NOT want the SE bands
-          linewidth   = 0.3) +   theme_bw() +
-  labs(title = "Random Slopes of Launch Angle",
-       x = "Launch Angle",
-       y = "Hit Distance (feet)")
-
-plot2 <- final_data |>
-  mutate(launch_angle_gmc_sqr = launch_angle_gmc^2) |>
-  ggplot(aes(x = launch_angle_gmc_sqr, y = log_y)) +
-  geom_smooth(aes(group = batter),
-          method = "lm",
-          se     = FALSE,      # do NOT want the SE bands
-          linewidth   = 0.3) +   theme_bw() +
-  labs(title = "Random Slopes of Squared Launch Angle",
-       x = "Squared Launch Angle",
-       y = "Hit Distance (feet)")
-
-plot1 + plot2
-```
 
 ```{r}
 confint(model11)
@@ -304,10 +286,8 @@ abline(lm(slopes~intercepts))
 
 #### Final Model
 
-```{r include = FALSE}
-#| label: Final Model
-model11 <- lmer(hit_distance_gmc ~ launch_angle_gmc + I(launch_angle_gmc^2)*launch_speed_gmc + standR + is_fastball + (1 + launch_angle_gmc | batter), data=final_data, REML = TRUE)
 
+```{r}
 summary(model11)
 performance(model11)
 confint(model11)
@@ -315,7 +295,7 @@ confint(model11)
 
 ```{r}
 #| label: Final Model Output
-#| fig-cap: 
+#| fig-cap: "Figure 6. Strength of model fit metrics"
 table <- performance(model11)|> 
   kableExtra::kbl(
                   col.names = c("AIC", 
